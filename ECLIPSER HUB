@@ -1,10 +1,10 @@
--- [[ ECLIPSER HUB - FULL SYSTEM WITH VIETNAMESE & ENGLISH ]]
+-- [[ ECLIPSER HUB - DYNAMIC ISLAND & FIXED LOGIC ]]
 local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 if CoreGui:FindFirstChild("EclipserHubUI") then
@@ -15,7 +15,54 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
 
--- 1. NÚT TOGGLE ECLIPSER KÉO THẢ GÓC DƯỚI BÊN TRÁI
+-- ==================== 1. DYNAMIC ISLAND LANG (TRÊN GIỮA MÀN HÌNH - TRẮNG/ĐEN) ====================
+local DynamicIsland = Instance.new("Frame")
+DynamicIsland.Name = "DynamicIsland"
+DynamicIsland.Size = UDim2.new(0, 160, 0, 45)
+DynamicIsland.Position = UDim2.new(0.5, -80, 0, 15)
+DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+DynamicIsland.Parent = ScreenGui
+
+local UICornerIsland = Instance.new("UICorner")
+UICornerIsland.CornerRadius = UDim.new(1, 0)
+UICornerIsland.Parent = DynamicIsland
+
+local UIStrokeIsland = Instance.new("UIStroke")
+UIStrokeIsland.Color = Color3.fromRGB(255, 255, 255)
+UIStrokeIsland.Thickness = 2
+UIStrokeIsland.Parent = DynamicIsland
+
+-- Nút EN (Trái)
+local BtnEN = Instance.new("TextButton")
+BtnEN.Size = UDim2.new(0.5, -4, 1, -6)
+BtnEN.Position = UDim2.new(0, 3, 0, 3)
+BtnEN.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Mặc định EN đang chọn (Trắng)
+BtnEN.Text = "EN"
+BtnEN.TextColor3 = Color3.fromRGB(0, 0, 0)
+BtnEN.Font = Enum.Font.FredokaOne
+BtnEN.TextSize = 14
+BtnEN.Parent = DynamicIsland
+
+local CornerEN = Instance.new("UICorner")
+CornerEN.CornerRadius = UDim.new(1, 0)
+CornerEN.Parent = BtnEN
+
+-- Nút VN (Phải)
+local BtnVN = Instance.new("TextButton")
+BtnVN.Size = UDim2.new(0.5, -4, 1, -6)
+BtnVN.Position = UDim2.new(0.5, 1, 0, 3)
+BtnVN.BackgroundColor3 = Color3.fromRGB(40, 40, 40) -- VN chưa chọn (Đen)
+BtnVN.Text = "VN"
+BtnVN.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnVN.Font = Enum.Font.FredokaOne
+BtnVN.TextSize = 14
+BtnVN.Parent = DynamicIsland
+
+local CornerVN = Instance.new("UICorner")
+CornerVN.CornerRadius = UDim.new(1, 0)
+CornerVN.Parent = BtnVN
+
+-- ==================== 2. NÚT TOGGLE ECLIPSER GÓC DƯỚI BÊN TRÁI ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 80, 0, 80)
@@ -31,7 +78,7 @@ local UICornerToggle = Instance.new("UICorner")
 UICornerToggle.CornerRadius = UDim.new(0, 16)
 UICornerToggle.Parent = ToggleBtn
 
--- Logic Kéo Thả Nút Toggle
+-- Kéo thả Toggle
 local dragging, dragInput, dragStart, startPos
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -57,11 +104,11 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 2. KHUNG MENU CHÍNH
+-- ==================== 3. MAIN FRAME (XOAY NỀN MÀU MƯỢT MÀ) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 520, 0, 290)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -145)
+MainFrame.Size = UDim2.new(0, 520, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -150)
 MainFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
@@ -69,6 +116,17 @@ MainFrame.Parent = ScreenGui
 local UICornerMain = Instance.new("UICorner")
 UICornerMain.CornerRadius = UDim.new(0, 16)
 UICornerMain.Parent = MainFrame
+
+-- Hiệu ứng xoay vòng màu nền viền/khung menu
+task.spawn(function()
+    while true do
+        for i = 0, 1, 0.005 do
+            if not MainFrame.Parent then return end
+            MainFrame.BackgroundColor3 = Color3.fromHSV(i, 0.3, 0.9)
+            task.wait(0.05)
+        end
+    end
+end)
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 200, 0, 40)
@@ -107,47 +165,81 @@ UICornerClose.CornerRadius = UDim.new(0, 6)
 UICornerClose.Parent = CloseBtn
 
 local menuVisible = true
-local function toggleMenu()
+ToggleBtn.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
-    if menuVisible then
-        MainFrame.Visible = true
-        MainFrame:TweenSize(UDim2.new(0, 520, 0, 290), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.3, true)
-    else
-        MainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.2, true, function()
-            MainFrame.Visible = false
-        end)
-    end
-end
-
-ToggleBtn.MouseButton1Click:Connect(toggleMenu)
-MinimizeBtn.MouseButton1Click:Connect(toggleMenu)
+    MainFrame.Visible = menuVisible
+end)
+MinimizeBtn.MouseButton1Click:Connect(function()
+    menuVisible = not menuVisible
+    MainFrame.Visible = menuVisible
+end)
 CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- NÚT FLOAT ĐỔI NGÔN NGỮ NHANH (MẶC ĐỊNH HIỆN KHU VỰC TRÊN MÀN HÌNH)
-local FloatLangBtn = Instance.new("TextButton")
-FloatLangBtn.Name = "FloatLangBtn"
-FloatLangBtn.Size = UDim2.new(0, 50, 0, 50)
-FloatLangBtn.Position = UDim2.new(0, 30, 0.5, -25)
-FloatLangBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-FloatLangBtn.Text = "🌐 EN"
-FloatLangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatLangBtn.Font = Enum.Font.GothamBold
-FloatLangBtn.TextSize = 14
-FloatLangBtn.Parent = ScreenGui
+-- ==================== 4. NGÔN NGỮ (DICTIONARY) ====================
+local CurrentLang = "EN"
 
-local UICornerFloat = Instance.new("UICorner")
-UICornerFloat.CornerRadius = UDim.new(1, 0)
-UICornerFloat.Parent = FloatLangBtn
+local LangData = {
+    ["EN"] = {
+        ["SelectGame"] = "1. Select Game: ",
+        ["SelectScript"] = "2. Select Script: ",
+        ["Execute"] = "⚡ EXECUTE SCRIPT",
+        ["Speed"] = "Speed",
+        ["Jump"] = "Jump",
+        ["GodMode"] = "God Mode (Hitbox Sky)",
+        ["FlyUp"] = "Fly Up",
+        ["FlyDown"] = "Fly Down",
+        ["Float"] = "Float Mode",
+        ["SavePos"] = "Save Position",
+        ["TPPos"] = "TP to Position",
+        ["AutoTP"] = "Auto TP",
+        ["AutoTPSec"] = "Auto TP Delay (0-100s)",
+        ["DeletePos"] = "Delete Old Position",
+        ["CustomFixLag"] = "Remove Graphics (10-90%)",
+        ["ApplyFixLag"] = "Apply Custom Fix Lag",
+        ["NormalFixLag"] = "Normal Fix Lag",
+        ["SuperFixLag"] = "Super Fix Lag",
+        ["UltraFixLag"] = "Ultra Fix Lag (Full Gray)",
+        ["Xray"] = "Glass Layout (X-Ray)",
+        ["EspV1"] = "ESP Player V1 (Blue + Name)",
+        ["EspV2"] = "ESP Player V2 (Box Max 7/250m)",
+        ["InfZoom"] = "Infinite Zoom",
+        ["DefaultColor"] = "Default Color",
+        ["RainbowColor"] = "Rainbow RGB Mode",
+        ["OtherNotice"] = "Will update more later!"
+    },
+    ["VN"] = {
+        ["SelectGame"] = "1. Chọn Game: ",
+        ["SelectScript"] = "2. Chọn Script: ",
+        ["Execute"] = "⚡ EXECUTE SCRIPT",
+        ["Speed"] = "Tốc độ chạy",
+        ["Jump"] = "Lực nhảy",
+        ["GodMode"] = "God Mode (Hitbox Trên Trời)",
+        ["FlyUp"] = "Bay Lên",
+        ["FlyDown"] = "Bay Xuống",
+        ["Float"] = "Đứng Im Trên Không",
+        ["SavePos"] = "Lưu Vị Trí",
+        ["TPPos"] = "TP Đến Vị Trí",
+        ["AutoTP"] = "Tự Động TP",
+        ["AutoTPSec"] = "Thời Gian Auto TP (0-100s)",
+        ["DeletePos"] = "Xóa Vị Trí Cũ",
+        ["CustomFixLag"] = "Nhập % Xóa Đồ Họa (10-90%)",
+        ["ApplyFixLag"] = "Áp Dụng Custom Fix Lag",
+        ["NormalFixLag"] = "Fix Lag Thông Thường",
+        ["SuperFixLag"] = "Super Fix Lag",
+        ["UltraFixLag"] = "Ultra Fix Lag (Full Xám)",
+        ["Xray"] = "Layout Kính Trong Suốt",
+        ["EspV1"] = "ESP Player V1 (Xanh + Tên)",
+        ["EspV2"] = "ESP Player V2 (Box Tối Đa 7 Người/250m)",
+        ["InfZoom"] = "Inf Zoom (Zoom Vô Hạn)",
+        ["DefaultColor"] = "Màu Gốc",
+        ["RainbowColor"] = "Màu Cầu Vồng RGB",
+        ["OtherNotice"] = "Hiện sẽ cập nhật thêm sau!"
+    }
+}
 
-local isVietnamese = false
-FloatLangBtn.MouseButton1Click:Connect(function()
-    isVietnamese = not isVietnamese
-    FloatLangBtn.Text = isVietnamese and "🌐 VN" or "🌐 EN"
-end)
-
--- CỘT TAB BÊN TRÁI
+-- ==================== 5. TABS & CONTAINERS ====================
 local TabHolder = Instance.new("ScrollingFrame")
 TabHolder.Size = UDim2.new(0, 120, 1, -50)
 TabHolder.Position = UDim2.new(0, 10, 0, 45)
@@ -183,7 +275,7 @@ for i, tabName in ipairs(tabs) do
     Container.Position = UDim2.new(0, 140, 0, 45)
     Container.BackgroundTransparency = 1
     Container.Visible = (i == 1)
-    Container.CanvasSize = UDim2.new(0, 0, 3, 0) -- Thiết kế khung vuốt
+    Container.CanvasSize = UDim2.new(0, 0, 3.5, 0)
     Container.ScrollBarThickness = 4
     Container.Parent = MainFrame
 
@@ -203,7 +295,7 @@ for i, tabName in ipairs(tabs) do
     end)
 end
 
--- BỘ DỤNG CỤ TẠO GIAO DIỆN HỖ TRỢ (UI ELEMENTS)
+-- HELPER FUNCTIONS
 local function CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -10, 0, 32)
@@ -262,10 +354,10 @@ local function CreateToggle(parent, text, callback)
         state = not state
         if state then
             toggle.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-            circle:TweenPosition(UDim2.new(1, -20, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+            circle.Position = UDim2.new(1, -20, 0.5, -9)
         else
             toggle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-            circle:TweenPosition(UDim2.new(0, 2, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+            circle.Position = UDim2.new(0, 2, 0.5, -9)
         end
         callback(state)
     end)
@@ -292,100 +384,168 @@ local function CreateInput(parent, placeholder, callback)
     return box
 end
 
--- ==================== 1. TAB MAIN ====================
+-- ==================== TAB 1: MAIN ====================
 local MainTab = containers["main"]
-CreateButton(MainTab, "1. Select Game / Chọn Game", function() end)
-CreateButton(MainTab, "2. Select Script / Chọn Script", function() end)
-CreateButton(MainTab, "⚡ EXECUTE SCRIPT", function() end)
+local GameData = {
+    ["Steal an Egg"] = {["Chiliin Hub"] = "url1", ["Hoho Hub"] = "url2"},
+    ["Ride a Pet"] = {["Speed Hub X"] = "url3", ["Redz Hub"] = "url4"},
+    ["Clone to Steal Egg"] = {["Vortex Hub"] = "url5"},
+    ["Blox Fruit"] = {["Redz Hub"] = "url6", ["W-Azure Hub"] = "url7"}
+}
+local SelectedGame, SelectedScript, SelectedUrl = nil, nil, nil
 
--- ==================== 2. TAB PLAYER ====================
+local GameBtn = CreateButton(MainTab, LangData[CurrentLang]["SelectGame"] .. "None", function()
+    local games = {"Steal an Egg", "Ride a Pet", "Clone to Steal Egg", "Blox Fruit"}
+    local idx = (table.find(games, SelectedGame) or 0) % #games + 1
+    SelectedGame = games[idx]
+    SelectedScript, SelectedUrl = nil, nil
+    GameBtn.Text = LangData[CurrentLang]["SelectGame"] .. SelectedGame
+    ScriptBtn.Text = LangData[CurrentLang]["SelectScript"] .. "None"
+end)
+
+local ScriptBtn = CreateButton(MainTab, LangData[CurrentLang]["SelectScript"] .. "None", function()
+    if not SelectedGame then return end
+    local sList = {}
+    for name, _ in pairs(GameData[SelectedGame]) do table.insert(sList, name) end
+    local idx = (table.find(sList, SelectedScript) or 0) % #sList + 1
+    SelectedScript = sList[idx]
+    SelectedUrl = GameData[SelectedGame][SelectedScript]
+    ScriptBtn.Text = LangData[CurrentLang]["SelectScript"] .. SelectedScript
+end)
+
+CreateButton(MainTab, LangData[CurrentLang]["Execute"], function()
+    if SelectedUrl then loadstring(game:HttpGet(SelectedUrl))() end
+end)
+
+-- ==================== TAB 2: PLAYER ====================
 local PlayerTab = containers["player"]
-local SpeedEnabled, CustomSpeed = false, 16
-local JumpEnabled, CustomJump = 50
+local SpeedOn, SpdVal, JumpOn, JmpVal = false, 16, false, 50
 
--- Normal
-CreateToggle(PlayerTab, "Speed (Tốc độ)", function(v)
-    SpeedEnabled = v
+CreateToggle(PlayerTab, LangData[CurrentLang]["Speed"], function(v)
+    SpeedOn = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = SpeedEnabled and CustomSpeed or 16
+        LocalPlayer.Character.Humanoid.WalkSpeed = SpeedOn and SpdVal or 16
     end
 end)
-CreateInput(PlayerTab, "Enter Speed / Nhập số speed", function(t)
-    local n = tonumber(t)
-    if n then CustomSpeed = n end
-end)
-CreateToggle(PlayerTab, "Jump (Độ cao nhảy)", function(v)
-    JumpEnabled = v
+CreateInput(PlayerTab, "WalkSpeed Value", function(t) if tonumber(t) then SpdVal = tonumber(t) end end)
+
+CreateToggle(PlayerTab, LangData[CurrentLang]["Jump"], function(v)
+    JumpOn = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = JumpEnabled and CustomJump or 50
+        LocalPlayer.Character.Humanoid.JumpPower = JumpOn and JmpVal or 50
     end
 end)
-CreateInput(PlayerTab, "Enter Jump / Nhập số jump", function(t)
-    local n = tonumber(t)
-    if n then CustomJump = n end
-end)
-CreateToggle(PlayerTab, "God Mode (Hitbox Trên Trời)", function(v) end)
+CreateInput(PlayerTab, "JumpPower Value", function(t) if tonumber(t) then JmpVal = tonumber(t) end end)
 
--- Fly
-CreateButton(PlayerTab, "Fly Up (Bay Lên)", function()
+CreateToggle(PlayerTab, LangData[CurrentLang]["GodMode"], function(v)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = v and (LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 500, 0)) or LocalPlayer.Character.HumanoidRootPart.CFrame
+    end
+end)
+
+local FloatOn = false
+CreateButton(PlayerTab, LangData[CurrentLang]["FlyUp"], function()
+    FloatOn = false
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, 5, 0) end
+    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, 10, 0) end
 end)
-CreateButton(PlayerTab, "Fly Down (Bay Xuống)", function()
+CreateButton(PlayerTab, LangData[CurrentLang]["FlyDown"], function()
+    FloatOn = false
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, -5, 0) end
+    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, -10, 0) end
 end)
-CreateToggle(PlayerTab, "Float (Đứng Im Trên Không)", function(v) end)
+CreateToggle(PlayerTab, LangData[CurrentLang]["Float"], function(v) FloatOn = v end)
 
--- TP
-local SavedCFrame = nil
-CreateButton(PlayerTab, "Save Vị Trí (Save Pos)", function()
-    if SavedCFrame == nil and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        SavedCFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
-    end
+local SavedCF = nil
+local AutoTPOn, AutoTPD = false, 0
+CreateButton(PlayerTab, LangData[CurrentLang]["SavePos"], function()
+    if SavedCF ~= nil then return end
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then SavedCF = hrp.CFrame end
 end)
-CreateButton(PlayerTab, "TP Đến Vị Trí (Teleport)", function()
-    if SavedCFrame and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = SavedCFrame
-    end
+CreateButton(PlayerTab, LangData[CurrentLang]["TPPos"], function()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp and SavedCF then hrp.CFrame = SavedCF end
 end)
-CreateToggle(PlayerTab, "Tự Động TP (Auto TP)", function(v) end)
-CreateInput(PlayerTab, "Thời Gian Auto TP (0 - 100s)", function(t) end)
-CreateButton(PlayerTab, "Xóa Vị Trí Cũ (Delete Pos)", function()
-    SavedCFrame = nil
+CreateToggle(PlayerTab, LangData[CurrentLang]["AutoTP"], function(v)
+    AutoTPOn = v
+    task.spawn(function()
+        while AutoTPOn and SavedCF do
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then hrp.CFrame = SavedCF end
+            task.wait(AutoTPD)
+        end
+    end)
 end)
+CreateInput(PlayerTab, LangData[CurrentLang]["AutoTPSec"], function(t) if tonumber(t) then AutoTPD = math.clamp(tonumber(t), 0, 100) end end)
+CreateButton(PlayerTab, LangData[CurrentLang]["DeletePos"], function() SavedCF = nil end)
 
--- ==================== 3. TAB VISUAL ====================
+-- ==================== TAB 3: VISUAL ====================
 local VisualTab = containers["visual"]
-
--- Fix Lag
-CreateInput(VisualTab, "Xóa % Đồ Họa (10 - 90%)", function(t) end)
-CreateButton(VisualTab, "Fix Lag Thông Thường", function()
+local FixPct = 10
+CreateInput(VisualTab, LangData[CurrentLang]["CustomFixLag"], function(t) if tonumber(t) then FixPct = math.clamp(tonumber(t), 10, 90) end end)
+CreateButton(VisualTab, LangData[CurrentLang]["ApplyFixLag"], function()
+    local targets = {}
     for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then obj.Material = Enum.Material.SmoothPlastic end
+        if obj:IsA("Decal") or obj:IsA("Texture") or (obj:IsA("BasePart") and not obj.CanCollide) then
+            table.insert(targets, obj)
+        end
+    end
+    for i = 1, math.floor(#targets * (FixPct / 100)) do if targets[i] then targets[i]:Destroy() end end
+end)
+CreateButton(VisualTab, LangData[CurrentLang]["NormalFixLag"], function()
+    for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") then o.Material = Enum.Material.SmoothPlastic end end
+end)
+CreateButton(VisualTab, LangData[CurrentLang]["SuperFixLag"], function()
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") then o.Material = Enum.Material.SmoothPlastic end end
+end)
+CreateButton(VisualTab, LangData[CurrentLang]["UltraFixLag"], function()
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    for _, o in pairs(Workspace:GetDescendants()) do
+        if o:IsA("ParticleEmitter") or o:IsA("Smoke") or o:IsA("Fire") or o:IsA("Sparkles") or o:IsA("Decal") or o:IsA("Texture") then
+            o:Destroy()
+        elseif o:IsA("BasePart") then
+            o.Material = Enum.Material.SmoothPlastic
+            o.Color = Color3.fromRGB(120, 120, 120)
+        end
     end
 end)
-CreateButton(VisualTab, "Super Fix Lag", function() end)
-CreateButton(VisualTab, "Ultra Fix Lag (Full Xám)", function() end)
-
--- ESP & Zoom
-CreateToggle(VisualTab, "Layout Kính Trong Suốt", function(v) end)
-CreateToggle(VisualTab, "ESP Player V1 (Xanh + Tên)", function(v) end)
-CreateToggle(VisualTab, "ESP Player V2 (Box 250m & 7 Ng)", function(v) end)
-CreateToggle(VisualTab, "Inf Zoom (Zoom Vô Hạn)", function(v)
-    LocalPlayer.CameraMaxZoomDistance = v and 999999 or 128
+CreateToggle(VisualTab, LangData[CurrentLang]["Xray"], function(v)
+    for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") and not o.Parent:FindFirstChild("Humanoid") then o.LocalTransparencyModifier = v and 0.6 or 0 end end
 end)
+CreateToggle(VisualTab, LangData[CurrentLang]["InfZoom"], function(v) LocalPlayer.CameraMaxZoomDistance = v and 999999 or 128 end)
 
--- ==================== 4. TAB SETTING ====================
+-- ==================== TAB 4: SETTING ====================
 local SettingTab = containers["setting"]
-CreateButton(SettingTab, "Màu Gốc (Default Color)", function() end)
-CreateToggle(SettingTab, "Màu Cầu Vồng (Rainbow RGB)", function(v) end)
-CreateToggle(SettingTab, "Hiện Nút Float Chỉnh Tiếng", function(v)
-    FloatLangBtn.Visible = v
+CreateButton(SettingTab, LangData[CurrentLang]["DefaultColor"], function() MainFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200) end)
+
+-- ==================== TAB 5: OTHER ====================
+local OtherTab = containers["other"]
+CreateButton(OtherTab, "Tiktok Script: None", function() end)
+CreateButton(OtherTab, "Discord Script: None", function() end)
+CreateButton(OtherTab, "Youtube Script: None", function() end)
+
+-- ==================== LOGIC DYNAMIC ISLAND CHUYỂN NGÔN NGỮ ====================
+local function UpdateLanguageUI()
+    BtnEN.BackgroundColor3 = (CurrentLang == "EN") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(40, 40, 40)
+    BtnEN.TextColor3 = (CurrentLang == "EN") and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+    
+    BtnVN.BackgroundColor3 = (CurrentLang == "VN") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(40, 40, 40)
+    BtnVN.TextColor3 = (CurrentLang == "VN") and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+
+    GameBtn.Text = LangData[CurrentLang]["SelectGame"] .. (SelectedGame or "None")
+    ScriptBtn.Text = LangData[CurrentLang]["SelectScript"] .. (SelectedScript or "None")
+end
+
+BtnEN.MouseButton1Click:Connect(function()
+    CurrentLang = "EN"
+    UpdateLanguageUI()
 end)
 
--- ==================== 5. TAB OTHER ====================
-local OtherTab = containers["other"]
-CreateButton(OtherTab, "Tiktok Script: Chưa có", function() end)
-CreateButton(OtherTab, "Discord Script: Chưa có", function() end)
-CreateButton(OtherTab, "Youtube Script: Chưa có", function() end)
+BtnVN.MouseButton1Click:Connect(function()
+    CurrentLang = "VN"
+    UpdateLanguageUI()
+end)
