@@ -1,8 +1,7 @@
--- [[ ECLIPSER HUB - FULL INTRO: LOADING 0-100% + WELCOME TO ECLIPSER HUB ]]
+-- [[ ECLIPSER HUB - RIDE A PET SPECIAL EDITION ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
@@ -33,7 +32,6 @@ UIStrokeIntro.Thickness = 2
 UIStrokeIntro.Color = Color3.fromRGB(255, 255, 255)
 UIStrokeIntro.Parent = IntroFrame
 
--- Label Tiêu Đề / Chữ Chào Mừng
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 50)
 TitleLabel.Position = UDim2.new(0, 0, 0, 20)
@@ -44,7 +42,6 @@ TitleLabel.TextSize = 28
 TitleLabel.Font = Enum.Font.SourceSansBold
 TitleLabel.Parent = IntroFrame
 
--- Label Trạng Thái Loading / Subtitle Welcome
 local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Size = UDim2.new(1, 0, 0, 25)
 StatusLabel.Position = UDim2.new(0, 0, 0, 75)
@@ -55,7 +52,6 @@ StatusLabel.TextSize = 16
 StatusLabel.Font = Enum.Font.SourceSansBold
 StatusLabel.Parent = IntroFrame
 
--- Thanh Progress Bar
 local BarBackground = Instance.new("Frame")
 BarBackground.Size = UDim2.new(0.8, 0, 0, 10)
 BarBackground.Position = UDim2.new(0.1, 0, 0, 120)
@@ -77,18 +73,14 @@ local UICornerBarFill = Instance.new("UICorner")
 UICornerBarFill.CornerRadius = UDim.new(1, 0)
 UICornerBarFill.Parent = BarFill
 
--- LUỒNG HIỆU ỨNG: LOADING 0-100% -> WELCOME TO ECLIPSER HUB
+-- LUỒNG INTRO
 task.spawn(function()
-    -- Phase 1: Chạy % Loading
     for i = 1, 100 do
         BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
         StatusLabel.Text = "Loading please wait... " .. i .. "%"
-        task.wait(0.02)
+        task.wait(0.015)
     end
-
     task.wait(0.2)
-
-    -- Phase 2: Chuyển sang Welcome Screen
     BarBackground.Visible = false
     TitleLabel.Text = "Welcome to"
     TitleLabel.TextSize = 22
@@ -101,7 +93,7 @@ task.spawn(function()
     StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
     task.wait(1.2)
-    IntroFrame:Destroy() -- Xóa Intro và mở Menu chính
+    IntroFrame:Destroy()
 end)
 
 -- ==================== 1. DYNAMIC ISLAND (EN / VN) ====================
@@ -132,7 +124,6 @@ BtnEN.TextColor3 = Color3.fromRGB(0, 0, 0)
 BtnEN.Font = Enum.Font.SourceSansBold
 BtnEN.TextSize = 16
 BtnEN.Parent = DynamicIsland
-
 local CornerEN = Instance.new("UICorner")
 CornerEN.CornerRadius = UDim.new(1, 0)
 CornerEN.Parent = BtnEN
@@ -146,7 +137,6 @@ BtnVN.TextColor3 = Color3.fromRGB(255, 255, 255)
 BtnVN.Font = Enum.Font.SourceSansBold
 BtnVN.TextSize = 16
 BtnVN.Parent = DynamicIsland
-
 local CornerVN = Instance.new("UICorner")
 CornerVN.CornerRadius = UDim.new(1, 0)
 CornerVN.Parent = BtnVN
@@ -238,9 +228,9 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 200, 0, 40)
 Title.Position = UDim2.new(0, 160, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "eclipser hub"
+Title.Text = "ride a pet hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 24
+Title.TextSize = 22
 Title.Font = Enum.Font.SourceSansBold
 Title.Parent = MainFrame
 
@@ -283,69 +273,31 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- ==================== 4. NGÔN NGỮ DICTIONARY ====================
+-- ==================== 4. DICTIONARY (EN / VN) ====================
 local LangData = {
     ["EN"] = {
-        ["SelectGame"] = "1. Select Game: ",
-        ["SelectScript"] = "2. Select Script: ",
-        ["Execute"] = "⚡ EXECUTE SCRIPT",
-        ["SpeedToggle"] = "Enable Speed",
-        ["SpeedInput"] = "Enter Speed (e.g. 100)",
-        ["JumpToggle"] = "Enable Jump",
-        ["JumpInput"] = "Enter Jump (e.g. 150)",
-        ["GodMode"] = "God Mode (Hitbox Sky)",
-        ["FlyUp"] = "Fly Up",
-        ["FlyDown"] = "Fly Down",
-        ["Float"] = "Float Mode",
-        ["SavePos"] = "Save Position",
-        ["TPPos"] = "TP to Position",
-        ["AutoTP"] = "Auto TP Toggle",
-        ["AutoTPSec"] = "Auto TP Delay (0-100s)",
-        ["DeletePos"] = "Delete Old Position",
-        ["CustomFixLag"] = "Input % Remove Graphics (10-90%)",
-        ["ApplyFixLag"] = "Apply Custom Fix Lag",
-        ["NormalFixLag"] = "Normal Fix Lag",
-        ["SuperFixLag"] = "Super Fix Lag",
-        ["UltraFixLag"] = "Ultra Fix Lag (Full Gray)",
-        ["Xray"] = "Glass Layout (X-Ray)",
-        ["EspV1"] = "ESP Player V1 (Blue + Name)",
-        ["EspV2"] = "ESP Player V2 (Box Max 7/250m)",
-        ["InfZoom"] = "Infinite Zoom",
-        ["DefaultColor"] = "Default Black/White",
-        ["RotateToggle"] = "Toggle 360° Rotation",
-        ["ShowFloat"] = "Show Float Lang Button",
-        ["OtherNotice"] = "Will update more later!"
+        ["AutoSteal"] = "Auto Steal (Fly Enabled)",
+        ["StealSpeed"] = "Steal Speed (100 - 750)",
+        ["InstantSteal"] = "Instant Steal (Requires Auto Steal)",
+        ["InstantWarn"] = "* Not recommended when AFK / grinding",
+        ["RaritySelect"] = "Select Rarity (Default: All)",
+        ["PetSelect"] = "Select Pet (Default: Rarity)",
+        ["BestPet"] = "Auto Equip Best Pet",
+        ["PlaceEgg"] = "Auto Place Eggs",
+        ["EggRarity"] = "Egg Rarity (Default: All)",
+        ["EventHalloween"] = "Halloween Event 🎃 (Auto Candy & Spooky Hatch)"
     },
     ["VN"] = {
-        ["SelectGame"] = "1. Chọn Game: ",
-        ["SelectScript"] = "2. Chọn Script: ",
-        ["Execute"] = "⚡ EXECUTE SCRIPT",
-        ["SpeedToggle"] = "Bật Tốc Độ",
-        ["SpeedInput"] = "Nhập Số Tốc Độ (VD: 100)",
-        ["JumpToggle"] = "Bật Lực Nhảy",
-        ["JumpInput"] = "Nhập Số Lực Nhảy (VD: 150)",
-        ["GodMode"] = "God Mode (Hitbox Trên Trời)",
-        ["FlyUp"] = "Bay Lên",
-        ["FlyDown"] = "Bay Xuống",
-        ["Float"] = "Đứng Im Trên Không",
-        ["SavePos"] = "Lưu Vị Trí",
-        ["TPPos"] = "TP Đến Vị Trí",
-        ["AutoTP"] = "Tự Động TP",
-        ["AutoTPSec"] = "Thời Gian Auto TP (0-100s)",
-        ["DeletePos"] = "Xóa Vị Trí Cũ",
-        ["CustomFixLag"] = "Nhập % Xóa Đồ Họa (10-90%)",
-        ["ApplyFixLag"] = "Áp Dụng Custom Fix Lag",
-        ["NormalFixLag"] = "Fix Lag Thông Thường",
-        ["SuperFixLag"] = "Super Fix Lag",
-        ["UltraFixLag"] = "Ultra Fix Lag (Full Xám)",
-        ["Xray"] = "Layout Kính Trong Suốt",
-        ["EspV1"] = "ESP Player V1 (Xanh + Tên)",
-        ["EspV2"] = "ESP Player V2 (Box Tối Đa 7 Người/250m)",
-        ["InfZoom"] = "Inf Zoom (Zoom Vô Hạn)",
-        ["DefaultColor"] = "Màu Gốc Đen Trắng",
-        ["RotateToggle"] = "Bật/Tắt Xoay 360°",
-        ["ShowFloat"] = "Hiện Nút Float Chỉnh Tiếng",
-        ["OtherNotice"] = "Hiện sẽ cập nhật thêm sau!"
+        ["AutoSteal"] = "Tự Động Trộm (Đã Bật Bay)",
+        ["StealSpeed"] = "Tốc Độ Trộm (100 - 750)",
+        ["InstantSteal"] = "Trộm Nhanh Tức Thì (Cần Bật Tự Động Trộm)",
+        ["InstantWarn"] = "* Not recommended when AFK / grinding",
+        ["RaritySelect"] = "Chọn Độ Hiếm (Mặc Định: All)",
+        ["PetSelect"] = "Chọn Pet Muốn Trộm (Mặc Định: Rarity)",
+        ["BestPet"] = "Tự Động Trang Bị Pet Tốt Nhất",
+        ["PlaceEgg"] = "Tự Động Đặt Trứng",
+        ["EggRarity"] = "Độ Hiếm Trứng Đặt (Mặc Định: All)",
+        ["EventHalloween"] = "Sự Kiện Halloween 🎃 (Auto Kẹo & Mở Trứng Ma Quái)"
     }
 }
 
@@ -354,7 +306,7 @@ local TabHolder = Instance.new("ScrollingFrame")
 TabHolder.Size = UDim2.new(0, 120, 1, -50)
 TabHolder.Position = UDim2.new(0, 10, 0, 45)
 TabHolder.BackgroundTransparency = 1
-TabHolder.CanvasSize = UDim2.new(0, 0, 0, 240)
+TabHolder.CanvasSize = UDim2.new(0, 0, 0, 100)
 TabHolder.ScrollBarThickness = 2
 TabHolder.Parent = MainFrame
 
@@ -362,7 +314,7 @@ local UIListTab = Instance.new("UIListLayout")
 UIListTab.Padding = UDim.new(0, 6)
 UIListTab.Parent = TabHolder
 
-local tabs = {"main", "player", "visual", "setting", "other"}
+local tabs = {"main", "event", "visual", "setting"}
 local containers = {}
 
 for i, tabName in ipairs(tabs) do
@@ -371,7 +323,7 @@ for i, tabName in ipairs(tabs) do
     TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(25, 25, 25)
     TabBtn.Text = tabName
     TabBtn.TextColor3 = (i == 1) and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
-    TabBtn.TextSize = 16
+    TabBtn.TextSize = 15
     TabBtn.Font = Enum.Font.SourceSansBold
     TabBtn.Parent = TabHolder
 
@@ -385,7 +337,7 @@ for i, tabName in ipairs(tabs) do
     Container.Position = UDim2.new(0, 140, 0, 45)
     Container.BackgroundTransparency = 1
     Container.Visible = (i == 1)
-    Container.CanvasSize = UDim2.new(0, 0, 4, 0)
+    Container.CanvasSize = UDim2.new(0, 0, 3, 0)
     Container.ScrollBarThickness = 3
     Container.Parent = MainFrame
 
@@ -409,14 +361,14 @@ for i, tabName in ipairs(tabs) do
     end)
 end
 
--- HELPER UI BUILDER
+-- UI BUILDER HELPERS
 local function CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -10, 0, 34)
     btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 15
+    btn.TextSize = 14
     btn.Font = Enum.Font.SourceSansBold
     btn.Parent = parent
     local c = Instance.new("UICorner")
@@ -443,7 +395,7 @@ local function CreateToggle(parent, text, callback)
     label.Text = "  " .. text
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextSize = 15
+    label.TextSize = 14
     label.Font = Enum.Font.SourceSansBold
     label.Parent = frame
 
@@ -493,7 +445,7 @@ local function CreateInput(parent, placeholder, callback)
     box.Text = ""
     box.TextColor3 = Color3.fromRGB(255, 255, 255)
     box.PlaceholderColor3 = Color3.fromRGB(160, 160, 160)
-    box.TextSize = 15
+    box.TextSize = 14
     box.Font = Enum.Font.SourceSansBold
     box.Parent = parent
     local c = Instance.new("UICorner")
@@ -509,418 +461,93 @@ local function CreateInput(parent, placeholder, callback)
     return box
 end
 
--- ==================== TAB 1: MAIN ====================
+-- ==================== TAB 1: MAIN (RIDE A PET FEATURES) ====================
 local MainTab = containers["main"]
 
-local GameData = {
-    ["Steal an Egg"] = {
-        ["Chiliin Hub (No Key)"] = "https://raw.githubusercontent.com/Chiliin/Egg/main/script",
-        ["Hoho Hub (Có Key)"] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/HohoHub.lua",
-        ["Mukuru Hub (No Key)"] = "https://raw.githubusercontent.com/Mukuru/Egg/main/script"
-    },
-    ["Ride a Pet"] = {
-        ["Speed Hub X (Có Key)"] = "https://raw.githubusercontent.com/AhmadInvincible/Speed-Hub-X/main/Speed%20Hub%20X.lua",
-        ["Redz Hub (No Key)"] = "https://raw.githubusercontent.com/realredz/BloxFruits/main/Source.lua"
-    },
-    ["Clone to Steal Egg"] = {
-        ["Vortex Hub (No Key)"] = "https://raw.githubusercontent.com/Vortex/Clone/main/script"
-    },
-    ["Blox Fruit"] = {
-        ["Redz Hub (No Key)"] = "https://raw.githubusercontent.com/realredz/BloxFruits/main/Source.lua",
-        ["W-Azure Hub (Có Key)"] = "https://api.luarmor.net/files/v3/loaders/3b2169cf53bc6144d2d82eb91b5c2a04.lua",
-        ["Tsuo Hub (No Key)"] = "https://raw.githubusercontent.com/Tsuo7/TsuoHub/main/TsuoHub.lua"
-    }
-}
+local autoStealOn = false
+local stealSpeedVal = 100
+local instantStealOn = false
+local selectedRarity = "All"
+local selectedPet = "Rarity"
+local selectedEggRarity = "All"
 
-local SelectedGame, SelectedScript, SelectedUrl = nil, nil, nil
-
-local GameDropdownFrame = Instance.new("Frame")
-GameDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-GameDropdownFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-GameDropdownFrame.ClipsDescendants = true
-GameDropdownFrame.Parent = MainTab
-
-local UICornerGDF = Instance.new("UICorner")
-UICornerGDF.CornerRadius = UDim.new(0, 8)
-UICornerGDF.Parent = GameDropdownFrame
-
-local UIStrokeGDF = Instance.new("UIStroke")
-UIStrokeGDF.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeGDF.Thickness = 1
-UIStrokeGDF.Parent = GameDropdownFrame
-
-local GameHeaderBtn = Instance.new("TextButton")
-GameHeaderBtn.Size = UDim2.new(1, 0, 0, 34)
-GameHeaderBtn.BackgroundTransparency = 1
-GameHeaderBtn.Text = LangData[CurrentLang]["SelectGame"] .. "None ▼"
-GameHeaderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-GameHeaderBtn.Font = Enum.Font.SourceSansBold
-GameHeaderBtn.TextSize = 15
-GameHeaderBtn.Parent = GameDropdownFrame
-
-local GameListContainer = Instance.new("Frame")
-GameListContainer.Size = UDim2.new(1, 0, 0, 0)
-GameListContainer.Position = UDim2.new(0, 0, 0, 34)
-GameListContainer.BackgroundTransparency = 1
-GameListContainer.Parent = GameDropdownFrame
-
-local UIListG = Instance.new("UIListLayout")
-UIListG.Parent = GameListContainer
-
-local gameExpanded = false
-GameHeaderBtn.MouseButton1Click:Connect(function()
-    gameExpanded = not gameExpanded
-    if gameExpanded then
-        GameDropdownFrame.Size = UDim2.new(1, -10, 0, 34 + (#GameListContainer:GetChildren() - 1) * 30)
-        GameHeaderBtn.Text = LangData[CurrentLang]["SelectGame"] .. (SelectedGame or "None") .. " ▲"
-    else
-        GameDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-        GameHeaderBtn.Text = LangData[CurrentLang]["SelectGame"] .. (SelectedGame or "None") .. " ▼"
-    end
+local tAutoSteal, lblAutoSteal = CreateToggle(MainTab, LangData[CurrentLang]["AutoSteal"], function(v)
+    autoStealOn = v
 end)
 
-local games = {"Steal an Egg", "Ride a Pet", "Clone to Steal Egg", "Blox Fruit"}
-for _, gName in ipairs(games) do
-    local itemBtn = Instance.new("TextButton")
-    itemBtn.Size = UDim2.new(1, 0, 0, 30)
-    itemBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    itemBtn.Text = gName
-    itemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    itemBtn.Font = Enum.Font.SourceSansBold
-    itemBtn.TextSize = 14
-    itemBtn.Parent = GameListContainer
-
-    itemBtn.MouseButton1Click:Connect(function()
-        SelectedGame = gName
-        SelectedScript = nil
-        SelectedUrl = nil
-        gameExpanded = false
-        GameDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-        GameHeaderBtn.Text = LangData[CurrentLang]["SelectGame"] .. SelectedGame .. " ▼"
-        ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. "None ▼"
-    end)
-end
-
-local ScriptDropdownFrame = Instance.new("Frame")
-ScriptDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-ScriptDropdownFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-ScriptDropdownFrame.ClipsDescendants = true
-ScriptDropdownFrame.Parent = MainTab
-
-local UICornerSDF = Instance.new("UICorner")
-UICornerSDF.CornerRadius = UDim.new(0, 8)
-UICornerSDF.Parent = ScriptDropdownFrame
-
-local UIStrokeSDF = Instance.new("UIStroke")
-UIStrokeSDF.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeSDF.Thickness = 1
-UIStrokeSDF.Parent = ScriptDropdownFrame
-
-local ScriptHeaderBtn = Instance.new("TextButton")
-ScriptHeaderBtn.Size = UDim2.new(1, 0, 0, 34)
-ScriptHeaderBtn.BackgroundTransparency = 1
-ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. "None ▼"
-ScriptHeaderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ScriptHeaderBtn.Font = Enum.Font.SourceSansBold
-ScriptHeaderBtn.TextSize = 15
-ScriptHeaderBtn.Parent = ScriptDropdownFrame
-
-local ScriptListContainer = Instance.new("Frame")
-ScriptListContainer.Size = UDim2.new(1, 0, 0, 0)
-ScriptListContainer.Position = UDim2.new(0, 0, 0, 34)
-ScriptListContainer.BackgroundTransparency = 1
-ScriptListContainer.Parent = ScriptDropdownFrame
-
-local UIListS = Instance.new("UIListLayout")
-UIListS.Parent = ScriptListContainer
-
-local scriptExpanded = false
-ScriptHeaderBtn.MouseButton1Click:Connect(function()
-    if not SelectedGame then return end
-    scriptExpanded = not scriptExpanded
-    if scriptExpanded then
-        for _, child in pairs(ScriptListContainer:GetChildren()) do
-            if child:IsA("TextButton") then child:Destroy() end
-        end
-        local count = 0
-        for sName, sUrl in pairs(GameData[SelectedGame]) do
-            count = count + 1
-            local itemBtn = Instance.new("TextButton")
-            itemBtn.Size = UDim2.new(1, 0, 0, 30)
-            itemBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-            itemBtn.Text = sName
-            itemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            itemBtn.Font = Enum.Font.SourceSansBold
-            itemBtn.TextSize = 14
-            itemBtn.Parent = ScriptListContainer
-
-            itemBtn.MouseButton1Click:Connect(function()
-                SelectedScript = sName
-                SelectedUrl = sUrl
-                scriptExpanded = false
-                ScriptDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-                ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. SelectedScript .. " ▼"
-            end)
-        end
-        ScriptDropdownFrame.Size = UDim2.new(1, -10, 0, 34 + count * 30)
-        ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. (SelectedScript or "None") .. " ▲"
-    else
-        ScriptDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-        ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. (SelectedScript or "None") .. " ▼"
-    end
-end)
-
-CreateButton(MainTab, LangData[CurrentLang]["Execute"], function()
-    if SelectedUrl then loadstring(game:HttpGet(SelectedUrl))() end
-end)
-
--- ==================== TAB 2: PLAYER ====================
-local PlayerTab = containers["player"]
-local SpeedOn, SpdVal = false, 16
-local JumpOn, JmpVal = false, 50
-
-local tSpeed, lblSpeed = CreateToggle(PlayerTab, LangData[CurrentLang]["SpeedToggle"], function(v)
-    SpeedOn = v
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = SpeedOn and SpdVal or 16
-    end
-end)
-CreateInput(PlayerTab, LangData[CurrentLang]["SpeedInput"], function(t)
+CreateInput(MainTab, LangData[CurrentLang]["StealSpeed"] .. " (100-750)", function(t)
     local n = tonumber(t)
-    if n then
-        SpdVal = n
-        if SpeedOn and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = SpdVal
-        end
-    end
+    if n then stealSpeedVal = math.clamp(n, 100, 750) end
 end)
 
-local tJump, lblJump = CreateToggle(PlayerTab, LangData[CurrentLang]["JumpToggle"], function(v)
-    JumpOn = v
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = JumpOn and JmpVal or 50
-    end
-end)
-CreateInput(PlayerTab, LangData[CurrentLang]["JumpInput"], function(t)
-    local n = tonumber(t)
-    if n then
-        JmpVal = n
-        if JumpOn and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.JumpPower = JmpVal
-        end
-    end
-end)
-
-local GodModeOn = false
-local godPlatform = nil
-local tGod, lblGod = CreateToggle(PlayerTab, LangData[CurrentLang]["GodMode"], function(v)
-    GodModeOn = v
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    if GodModeOn then
-        if not godPlatform then
-            godPlatform = Instance.new("Part")
-            godPlatform.Size = Vector3.new(10, 1, 10)
-            godPlatform.Transparency = 1
-            godPlatform.Anchored = true
-            godPlatform.Parent = Workspace
-        end
-        godPlatform.CFrame = hrp.CFrame + Vector3.new(0, 200, 0)
-        hrp.CFrame = godPlatform.CFrame + Vector3.new(0, 3, 0)
+local tInstant, lblInstant = CreateToggle(MainTab, LangData[CurrentLang]["InstantSteal"], function(v)
+    if autoStealOn then
+        instantStealOn = v
     else
-        if godPlatform then godPlatform:Destroy() godPlatform = nil end
+        instantStealOn = false
     end
 end)
 
-local FloatOn = false
-local floatBV = nil
+-- Dòng chữ nhỏ cảnh báo (bằng tiếng Anh)
+local WarnLabel = Instance.new("TextLabel")
+WarnLabel.Size = UDim2.new(1, -10, 0, 20)
+WarnLabel.BackgroundTransparency = 1
+WarnLabel.Text = "* Not recommended when AFK / grinding"
+WarnLabel.TextColor3 = Color3.fromRGB(200, 80, 80)
+WarnLabel.TextSize = 11
+WarnLabel.Font = Enum.Font.SourceSansItalic
+WarnLabel.Parent = MainTab
 
-local function DisableFloat()
-    FloatOn = false
-    if floatBV then floatBV:Destroy() floatBV = nil end
-end
-
-CreateButton(PlayerTab, LangData[CurrentLang]["FlyUp"], function()
-    DisableFloat()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, 15, 0) end
+local RarityBtn = CreateButton(MainTab, LangData[CurrentLang]["RaritySelect"] .. ": All", function()
+    local rarities = {"All", "Common", "Rare", "Epic", "Legendary", "Mythic"}
+    local idx = (table.find(rarities, selectedRarity) or 1) % #rarities + 1
+    selectedRarity = rarities[idx]
+    RarityBtn.Text = LangData[CurrentLang]["RaritySelect"] .. ": " .. selectedRarity
 end)
 
-CreateButton(PlayerTab, LangData[CurrentLang]["FlyDown"], function()
-    DisableFloat()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, -15, 0) end
+local PetBtn = CreateButton(MainTab, LangData[CurrentLang]["PetSelect"] .. ": Rarity", function()
+    local modes = {"Rarity", "Specific Pet 1", "Specific Pet 2"}
+    local idx = (table.find(modes, selectedPet) or 1) % #modes + 1
+    selectedPet = modes[idx]
+    PetBtn.Text = LangData[CurrentLang]["PetSelect"] .. ": " .. selectedPet
 end)
 
-local tFloat, lblFloat = CreateToggle(PlayerTab, LangData[CurrentLang]["Float"], function(v)
-    FloatOn = v
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if FloatOn and hrp then
-        if floatBV then floatBV:Destroy() end
-        floatBV = Instance.new("BodyVelocity")
-        floatBV.MaxForce = Vector3.new(0, 1e9, 0)
-        floatBV.Velocity = Vector3.new(0, 0, 0)
-        floatBV.Parent = hrp
-    else
-        DisableFloat()
-    end
+CreateButton(MainTab, LangData[CurrentLang]["BestPet"], function()
+    -- Logic auto equip best pet
 end)
 
-local SavedCF = nil
-local AutoTPOn, AutoTPD = false, 0
-
-CreateButton(PlayerTab, LangData[CurrentLang]["SavePos"], function()
-    if SavedCF ~= nil then return end
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then SavedCF = hrp.CFrame end
+CreateButton(MainTab, LangData[CurrentLang]["PlaceEgg"], function()
+    -- Logic auto place eggs
 end)
 
-CreateButton(PlayerTab, LangData[CurrentLang]["TPPos"], function()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp and SavedCF then hrp.CFrame = SavedCF end
+local EggRarityBtn = CreateButton(MainTab, LangData[CurrentLang]["EggRarity"] .. ": All", function()
+    local rarities = {"All", "Common", "Rare", "Epic", "Legendary"}
+    local idx = (table.find(rarities, selectedEggRarity) or 1) % #rarities + 1
+    selectedEggRarity = rarities[idx]
+    EggRarityBtn.Text = LangData[CurrentLang]["EggRarity"] .. ": " .. selectedEggRarity
 end)
 
-local tAutoTP, lblAutoTP = CreateToggle(PlayerTab, LangData[CurrentLang]["AutoTP"], function(v)
-    AutoTPOn = v
-    task.spawn(function()
-        while AutoTPOn and SavedCF do
-            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then hrp.CFrame = SavedCF end
-            task.wait(AutoTPD)
-        end
-    end)
-end)
+-- ==================== TAB 2: EVENT (HALLOWEEN 🎃) ====================
+local EventTab = containers["event"]
 
-CreateInput(PlayerTab, LangData[CurrentLang]["AutoTPSec"], function(t) if tonumber(t) then AutoTPD = math.clamp(tonumber(t), 0, 100) end end)
-CreateButton(PlayerTab, LangData[CurrentLang]["DeletePos"], function() SavedCF = nil end)
+CreateToggle(EventTab, LangData[CurrentLang]["EventHalloween"], function(v)
+    -- Logic auto farm halloween event (Candy & Spooky Hatch)
+end)
 
 -- ==================== TAB 3: VISUAL ====================
 local VisualTab = containers["visual"]
-local FixPct = 10
-
-CreateInput(VisualTab, LangData[CurrentLang]["CustomFixLag"], function(t) if tonumber(t) then FixPct = math.clamp(tonumber(t), 10, 90) end end)
-
-CreateButton(VisualTab, LangData[CurrentLang]["ApplyFixLag"], function()
-    local targets = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("Decal") or obj:IsA("Texture") or (obj:IsA("BasePart") and not obj.CanCollide) then
-            table.insert(targets, obj)
-        end
-    end
-    for i = 1, math.floor(#targets * (FixPct / 100)) do if targets[i] then targets[i]:Destroy() end end
-end)
-
-CreateButton(VisualTab, LangData[CurrentLang]["NormalFixLag"], function()
-    for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") then o.Material = Enum.Material.SmoothPlastic end end
-end)
-
-CreateButton(VisualTab, LangData[CurrentLang]["SuperFixLag"], function()
+CreateButton(VisualTab, "Fix Lag / Full Bright", function()
     Lighting.GlobalShadows = false
     Lighting.FogEnd = 9e9
-    for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") then o.Material = Enum.Material.SmoothPlastic end end
-end)
-
-CreateButton(VisualTab, LangData[CurrentLang]["UltraFixLag"], function()
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 9e9
-    for _, o in pairs(Workspace:GetDescendants()) do
-        if o:IsA("ParticleEmitter") or o:IsA("Smoke") or o:IsA("Fire") or o:IsA("Sparkles") or o:IsA("Decal") or o:IsA("Texture") then
-            o:Destroy()
-        elseif o:IsA("BasePart") then
-            o.Material = Enum.Material.SmoothPlastic
-            o.Color = Color3.fromRGB(120, 120, 120)
-        end
-    end
-end)
-
-local EspV1On = false
-local tEspV1, lblEspV1 = CreateToggle(VisualTab, LangData[CurrentLang]["EspV1"], function(v)
-    EspV1On = v
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            if EspV1On then
-                if not player.Character:FindFirstChild("EclipserV1") then
-                    local hl = Instance.new("Highlight")
-                    hl.Name = "EclipserV1"
-                    hl.FillColor = Color3.fromRGB(0, 150, 255)
-                    hl.OutlineColor = Color3.fromRGB(0, 50, 255)
-                    hl.Parent = player.Character
-                end
-            else
-                if player.Character:FindFirstChild("EclipserV1") then player.Character.EclipserV1:Destroy() end
-            end
-        end
-    end
-end)
-
-local EspV2On = false
-local tEspV2, lblEspV2 = CreateToggle(VisualTab, LangData[CurrentLang]["EspV2"], function(v)
-    EspV2On = v
-    task.spawn(function()
-        while EspV2On do
-            local myChar = LocalPlayer.Character
-            local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-            if myHrp then
-                local list = {}
-                for _, p in pairs(Players:GetPlayers()) do
-                    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        local d = (p.Character.HumanoidRootPart.Position - myHrp.Position).Magnitude
-                        if d <= 250 then table.insert(list, {plr = p, dist = d}) end
-                    end
-                end
-                table.sort(list, function(a, b) return a.dist < b.dist end)
-                for i = 1, math.min(7, #list) do
-                    local char = list[i].plr.Character
-                    if char and not char:FindFirstChild("EclipserV2Box") then
-                        local b = Instance.new("SelectionBox")
-                        b.Name = "EclipserV2Box"
-                        b.Color3 = Color3.fromRGB(255, 255, 255)
-                        b.Adornee = char
-                        b.Parent = char
-                    end
-                end
-            end
-            task.wait(0.5)
-        end
-        for _, p in pairs(Players:GetPlayers()) do
-            if p.Character and p.Character:FindFirstChild("EclipserV2Box") then p.Character.EclipserV2Box:Destroy() end
-        end
-    end)
-end)
-
-local tXray, lblXray = CreateToggle(VisualTab, LangData[CurrentLang]["Xray"], function(v)
-    for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") and not o.Parent:FindFirstChild("Humanoid") then o.LocalTransparencyModifier = v and 0.6 or 0 end end
-end)
-
-local tInfZoom, lblInfZoom = CreateToggle(VisualTab, LangData[CurrentLang]["InfZoom"], function(v)
-    LocalPlayer.CameraMaxZoomDistance = v and 999999 or 128
 end)
 
 -- ==================== TAB 4: SETTING ====================
 local SettingTab = containers["setting"]
-
-CreateButton(SettingTab, LangData[CurrentLang]["DefaultColor"], function()
+CreateButton(SettingTab, "Reset UI Color", function()
     MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 end)
 
-local tRotate, lblRotate = CreateToggle(SettingTab, LangData[CurrentLang]["RotateToggle"], function(v)
-    RotateEnabled = v
-end)
-
-local tShowFloat, lblShowFloat = CreateToggle(SettingTab, LangData[CurrentLang]["ShowFloat"], function(v)
-    DynamicIsland.Visible = v
-end)
-
--- ==================== TAB 5: OTHER ====================
-local OtherTab = containers["other"]
-CreateButton(OtherTab, "Tiktok Script: None", function() end)
-CreateButton(OtherTab, "Discord Script: None", function() end)
-CreateButton(OtherTab, "Youtube Script: None", function() end)
-
--- ==================== LOGIC ĐỔI NGÔN NGỮ ====================
+-- ==================== DYNAMIC ISLAND NGÔN NGỮ ====================
 local function UpdateLanguage(lang)
     CurrentLang = lang
     if CurrentLang == "EN" then
@@ -935,20 +562,8 @@ local function UpdateLanguage(lang)
         BtnEN.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    GameHeaderBtn.Text = LangData[CurrentLang]["SelectGame"] .. (SelectedGame or "None") .. " ▼"
-    ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. (SelectedScript or "None") .. " ▼"
-
-    lblSpeed.Text = "  " .. LangData[CurrentLang]["SpeedToggle"]
-    lblJump.Text = "  " .. LangData[CurrentLang]["JumpToggle"]
-    lblGod.Text = "  " .. LangData[CurrentLang]["GodMode"]
-    lblFloat.Text = "  " .. LangData[CurrentLang]["Float"]
-    lblAutoTP.Text = "  " .. LangData[CurrentLang]["AutoTP"]
-    lblEspV1.Text = "  " .. LangData[CurrentLang]["EspV1"]
-    lblEspV2.Text = "  " .. LangData[CurrentLang]["EspV2"]
-    lblXray.Text = "  " .. LangData[CurrentLang]["Xray"]
-    lblInfZoom.Text = "  " .. LangData[CurrentLang]["InfZoom"]
-    lblRotate.Text = "  " .. LangData[CurrentLang]["RotateToggle"]
-    lblShowFloat.Text = "  " .. LangData[CurrentLang]["ShowFloat"]
+    lblAutoSteal.Text = "  " .. LangData[CurrentLang]["AutoSteal"]
+    lblInstant.Text = "  " .. LangData[CurrentLang]["InstantSteal"]
 end
 
 BtnEN.MouseButton1Click:Connect(function() UpdateLanguage("EN") end)
