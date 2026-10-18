@@ -1,4 +1,4 @@
--- [[ ECLIPSER HUB - FULLY FIXED BLACK & WHITE 360 ROTATING UI ]]
+-- [[ ECLIPSER HUB - FULL INTRO: LOADING 0-100% + WELCOME TO ECLIPSER HUB ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
@@ -15,13 +15,102 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
 
--- ==================== 1. DYNAMIC ISLAND (GIỮA MÀN HÌNH - MẶC ĐỊNH ENGLISH) ====================
-local CurrentLang = "EN" -- Bắt buộc mặc định là English
+-- ==================== 0. INTRO SCREEN (LOADING + WELCOME) ====================
+local IntroFrame = Instance.new("Frame")
+IntroFrame.Name = "IntroFrame"
+IntroFrame.Size = UDim2.new(0, 360, 0, 190)
+IntroFrame.Position = UDim2.new(0.5, -180, 0.5, -95)
+IntroFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+IntroFrame.BorderSizePixel = 0
+IntroFrame.Parent = ScreenGui
+
+local UICornerIntro = Instance.new("UICorner")
+UICornerIntro.CornerRadius = UDim.new(0, 16)
+UICornerIntro.Parent = IntroFrame
+
+local UIStrokeIntro = Instance.new("UIStroke")
+UIStrokeIntro.Thickness = 2
+UIStrokeIntro.Color = Color3.fromRGB(255, 255, 255)
+UIStrokeIntro.Parent = IntroFrame
+
+-- Label Tiêu Đề / Chữ Chào Mừng
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, 0, 0, 50)
+TitleLabel.Position = UDim2.new(0, 0, 0, 20)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "Eclipser Hub"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 28
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.Parent = IntroFrame
+
+-- Label Trạng Thái Loading / Subtitle Welcome
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, 0, 0, 25)
+StatusLabel.Position = UDim2.new(0, 0, 0, 75)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Loading please wait... 0%"
+StatusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+StatusLabel.TextSize = 16
+StatusLabel.Font = Enum.Font.SourceSansBold
+StatusLabel.Parent = IntroFrame
+
+-- Thanh Progress Bar
+local BarBackground = Instance.new("Frame")
+BarBackground.Size = UDim2.new(0.8, 0, 0, 10)
+BarBackground.Position = UDim2.new(0.1, 0, 0, 120)
+BarBackground.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+BarBackground.BorderSizePixel = 0
+BarBackground.Parent = IntroFrame
+
+local UICornerBarBg = Instance.new("UICorner")
+UICornerBarBg.CornerRadius = UDim.new(1, 0)
+UICornerBarBg.Parent = BarBackground
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+BarFill.BorderSizePixel = 0
+BarFill.Parent = BarBackground
+
+local UICornerBarFill = Instance.new("UICorner")
+UICornerBarFill.CornerRadius = UDim.new(1, 0)
+UICornerBarFill.Parent = BarFill
+
+-- LUỒNG HIỆU ỨNG: LOADING 0-100% -> WELCOME TO ECLIPSER HUB
+task.spawn(function()
+    -- Phase 1: Chạy % Loading
+    for i = 1, 100 do
+        BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
+        StatusLabel.Text = "Loading please wait... " .. i .. "%"
+        task.wait(0.02)
+    end
+
+    task.wait(0.2)
+
+    -- Phase 2: Chuyển sang Welcome Screen
+    BarBackground.Visible = false
+    TitleLabel.Text = "Welcome to"
+    TitleLabel.TextSize = 22
+    TitleLabel.Position = UDim2.new(0, 0, 0, 45)
+    TitleLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+
+    StatusLabel.Text = "Eclipser Hub"
+    StatusLabel.TextSize = 32
+    StatusLabel.Position = UDim2.new(0, 0, 0, 80)
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    task.wait(1.2)
+    IntroFrame:Destroy() -- Xóa Intro và mở Menu chính
+end)
+
+-- ==================== 1. DYNAMIC ISLAND (EN / VN) ====================
+local CurrentLang = "EN"
 
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
-DynamicIsland.Size = UDim2.new(0, 140, 0, 40)
-DynamicIsland.Position = UDim2.new(0.5, -70, 0, 15)
+DynamicIsland.Size = UDim2.new(0, 150, 0, 40)
+DynamicIsland.Position = UDim2.new(0.5, -75, 0, 15)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DynamicIsland.Parent = ScreenGui
 
@@ -34,37 +123,35 @@ UIStrokeIsland.Color = Color3.fromRGB(255, 255, 255)
 UIStrokeIsland.Thickness = 2
 UIStrokeIsland.Parent = DynamicIsland
 
--- Nút EN (Trái)
 local BtnEN = Instance.new("TextButton")
 BtnEN.Size = UDim2.new(0.5, -4, 1, -6)
 BtnEN.Position = UDim2.new(0, 3, 0, 3)
-BtnEN.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Trắng (Đang chọn)
+BtnEN.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 BtnEN.Text = "EN"
 BtnEN.TextColor3 = Color3.fromRGB(0, 0, 0)
-BtnEN.Font = Enum.Font.FredokaOne
-BtnEN.TextSize = 13
+BtnEN.Font = Enum.Font.SourceSansBold
+BtnEN.TextSize = 16
 BtnEN.Parent = DynamicIsland
 
 local CornerEN = Instance.new("UICorner")
 CornerEN.CornerRadius = UDim.new(1, 0)
 CornerEN.Parent = BtnEN
 
--- Nút VN (Phải)
 local BtnVN = Instance.new("TextButton")
 BtnVN.Size = UDim2.new(0.5, -4, 1, -6)
 BtnVN.Position = UDim2.new(0.5, 1, 0, 3)
-BtnVN.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- Đen (Chưa chọn)
+BtnVN.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 BtnVN.Text = "VN"
 BtnVN.TextColor3 = Color3.fromRGB(255, 255, 255)
-BtnVN.Font = Enum.Font.FredokaOne
-BtnVN.TextSize = 13
+BtnVN.Font = Enum.Font.SourceSansBold
+BtnVN.TextSize = 16
 BtnVN.Parent = DynamicIsland
 
 local CornerVN = Instance.new("UICorner")
 CornerVN.CornerRadius = UDim.new(1, 0)
 CornerVN.Parent = BtnVN
 
--- ==================== 2. NÚT ECLIPSER THU NHỎ (60x60) ====================
+-- ==================== 2. TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -72,8 +159,8 @@ ToggleBtn.Position = UDim2.new(0, 20, 1, -80)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleBtn.Text = "eclipser"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 13
-ToggleBtn.Font = Enum.Font.FredokaOne
+ToggleBtn.TextSize = 15
+ToggleBtn.Font = Enum.Font.SourceSansBold
 ToggleBtn.Parent = ScreenGui
 
 local UICornerToggle = Instance.new("UICorner")
@@ -85,7 +172,6 @@ UIStrokeToggle.Color = Color3.fromRGB(255, 255, 255)
 UIStrokeToggle.Thickness = 2
 UIStrokeToggle.Parent = ToggleBtn
 
--- Kéo thả Toggle
 local dragging, dragInput, dragStart, startPos
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -111,12 +197,12 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ==================== 3. MAIN FRAME (ĐEN TRẮNG ĐỐI XỨNG + XOAY 360°) ====================
+-- ==================== 3. MAIN FRAME (XOAY 360°) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 520, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -150)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainFrame.Size = UDim2.new(0, 520, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -155)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
@@ -124,7 +210,6 @@ local UICornerMain = Instance.new("UICorner")
 UICornerMain.CornerRadius = UDim.new(0, 16)
 UICornerMain.Parent = MainFrame
 
--- Viền Gradient Xoay 360 độ Đen Trắng
 local UIStrokeMain = Instance.new("UIStroke")
 UIStrokeMain.Thickness = 3
 UIStrokeMain.Parent = MainFrame
@@ -137,13 +222,12 @@ UIGradientMain.Color = ColorSequence.new({
 })
 UIGradientMain.Parent = UIStrokeMain
 
--- Logic xoay 360 độ liên tục
 local RotateEnabled = true
 task.spawn(function()
     local angle = 0
     while true do
-        if RotateEnabled then
-            angle = (angle + 2) % 360
+        if RotateEnabled and UIStrokeMain and UIStrokeMain.Parent then
+            angle = (angle + 3) % 360
             UIGradientMain.Rotation = angle
         end
         task.wait(0.02)
@@ -156,8 +240,8 @@ Title.Position = UDim2.new(0, 160, 0, 5)
 Title.BackgroundTransparency = 1
 Title.Text = "eclipser hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 22
-Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 24
+Title.Font = Enum.Font.SourceSansBold
 Title.Parent = MainFrame
 
 local MinimizeBtn = Instance.new("TextButton")
@@ -166,7 +250,8 @@ MinimizeBtn.Position = UDim2.new(1, -85, 0, 10)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 MinimizeBtn.Text = "━"
 MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Font = Enum.Font.SourceSansBold
+MinimizeBtn.TextSize = 16
 MinimizeBtn.Parent = MainFrame
 local UICornerMin = Instance.new("UICorner")
 UICornerMin.CornerRadius = UDim.new(0, 6)
@@ -178,7 +263,8 @@ CloseBtn.Position = UDim2.new(1, -45, 0, 10)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Text = "✖"
 CloseBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.TextSize = 16
 CloseBtn.Parent = MainFrame
 local UICornerClose = Instance.new("UICorner")
 UICornerClose.CornerRadius = UDim.new(0, 6)
@@ -282,11 +368,11 @@ local containers = {}
 for i, tabName in ipairs(tabs) do
     local TabBtn = Instance.new("TextButton")
     TabBtn.Size = UDim2.new(1, -5, 0, 38)
-    TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(20, 20, 20)
+    TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(25, 25, 25)
     TabBtn.Text = tabName
     TabBtn.TextColor3 = (i == 1) and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
     TabBtn.TextSize = 16
-    TabBtn.Font = Enum.Font.FredokaOne
+    TabBtn.Font = Enum.Font.SourceSansBold
     TabBtn.Parent = TabHolder
 
     local UICornerTab = Instance.new("UICorner")
@@ -313,7 +399,7 @@ for i, tabName in ipairs(tabs) do
         for _, c in pairs(containers) do c.Visible = false end
         for _, b in pairs(TabHolder:GetChildren()) do
             if b:IsA("TextButton") then
-                b.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+                b.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
                 b.TextColor3 = Color3.fromRGB(255, 255, 255)
             end
         end
@@ -323,15 +409,15 @@ for i, tabName in ipairs(tabs) do
     end)
 end
 
--- HELPER FUNCTIONS (ĐEN TRẮNG 360)
+-- HELPER UI BUILDER
 local function CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -10, 0, 34)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 13
-    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 15
+    btn.Font = Enum.Font.SourceSansBold
     btn.Parent = parent
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, 8)
@@ -357,14 +443,14 @@ local function CreateToggle(parent, text, callback)
     label.Text = "  " .. text
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamBold
+    label.TextSize = 15
+    label.Font = Enum.Font.SourceSansBold
     label.Parent = frame
 
     local toggle = Instance.new("TextButton")
     toggle.Size = UDim2.new(0, 46, 0, 22)
     toggle.Position = UDim2.new(1, -50, 0.5, -11)
-    toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     toggle.Text = ""
     toggle.Parent = frame
 
@@ -390,25 +476,25 @@ local function CreateToggle(parent, text, callback)
             circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
             circle.Position = UDim2.new(1, -20, 0.5, -9)
         else
-            toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             circle.Position = UDim2.new(0, 2, 0.5, -9)
         end
         callback(state)
     end)
-    return frame
+    return frame, label
 end
 
 local function CreateInput(parent, placeholder, callback)
     local box = Instance.new("TextBox")
     box.Size = UDim2.new(1, -10, 0, 34)
-    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    box.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     box.PlaceholderText = placeholder
     box.Text = ""
     box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-    box.TextSize = 13
-    box.Font = Enum.Font.GothamBold
+    box.PlaceholderColor3 = Color3.fromRGB(160, 160, 160)
+    box.TextSize = 15
+    box.Font = Enum.Font.SourceSansBold
     box.Parent = parent
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, 8)
@@ -423,22 +509,34 @@ local function CreateInput(parent, placeholder, callback)
     return box
 end
 
--- ==================== TAB 1: MAIN (DROPDOWN MỞ RỘNG / THU NHỎ) ====================
+-- ==================== TAB 1: MAIN ====================
 local MainTab = containers["main"]
 
 local GameData = {
-    ["Steal an Egg"] = {["Chiliin Hub"] = "https://raw.githubusercontent.com/.../chiliin.lua", ["Hoho Hub"] = "https://raw.githubusercontent.com/.../hoho.lua"},
-    ["Ride a Pet"] = {["Speed Hub X"] = "https://raw.githubusercontent.com/.../speedhub.lua", ["Redz Hub"] = "https://raw.githubusercontent.com/.../redz.lua"},
-    ["Clone to Steal Egg"] = {["Vortex Hub"] = "https://raw.githubusercontent.com/.../vortex.lua"},
-    ["Blox Fruit"] = {["Redz Hub"] = "https://raw.githubusercontent.com/.../redz.lua", ["W-Azure Hub"] = "https://raw.githubusercontent.com/.../wazure.lua"}
+    ["Steal an Egg"] = {
+        ["Chiliin Hub (No Key)"] = "https://raw.githubusercontent.com/Chiliin/Egg/main/script",
+        ["Hoho Hub (Có Key)"] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/HohoHub.lua",
+        ["Mukuru Hub (No Key)"] = "https://raw.githubusercontent.com/Mukuru/Egg/main/script"
+    },
+    ["Ride a Pet"] = {
+        ["Speed Hub X (Có Key)"] = "https://raw.githubusercontent.com/AhmadInvincible/Speed-Hub-X/main/Speed%20Hub%20X.lua",
+        ["Redz Hub (No Key)"] = "https://raw.githubusercontent.com/realredz/BloxFruits/main/Source.lua"
+    },
+    ["Clone to Steal Egg"] = {
+        ["Vortex Hub (No Key)"] = "https://raw.githubusercontent.com/Vortex/Clone/main/script"
+    },
+    ["Blox Fruit"] = {
+        ["Redz Hub (No Key)"] = "https://raw.githubusercontent.com/realredz/BloxFruits/main/Source.lua",
+        ["W-Azure Hub (Có Key)"] = "https://api.luarmor.net/files/v3/loaders/3b2169cf53bc6144d2d82eb91b5c2a04.lua",
+        ["Tsuo Hub (No Key)"] = "https://raw.githubusercontent.com/Tsuo7/TsuoHub/main/TsuoHub.lua"
+    }
 }
 
 local SelectedGame, SelectedScript, SelectedUrl = nil, nil, nil
 
--- 1. Game Dropdown Frame
 local GameDropdownFrame = Instance.new("Frame")
 GameDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-GameDropdownFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+GameDropdownFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 GameDropdownFrame.ClipsDescendants = true
 GameDropdownFrame.Parent = MainTab
 
@@ -456,8 +554,8 @@ GameHeaderBtn.Size = UDim2.new(1, 0, 0, 34)
 GameHeaderBtn.BackgroundTransparency = 1
 GameHeaderBtn.Text = LangData[CurrentLang]["SelectGame"] .. "None ▼"
 GameHeaderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-GameHeaderBtn.Font = Enum.Font.GothamBold
-GameHeaderBtn.TextSize = 13
+GameHeaderBtn.Font = Enum.Font.SourceSansBold
+GameHeaderBtn.TextSize = 15
 GameHeaderBtn.Parent = GameDropdownFrame
 
 local GameListContainer = Instance.new("Frame")
@@ -485,11 +583,11 @@ local games = {"Steal an Egg", "Ride a Pet", "Clone to Steal Egg", "Blox Fruit"}
 for _, gName in ipairs(games) do
     local itemBtn = Instance.new("TextButton")
     itemBtn.Size = UDim2.new(1, 0, 0, 30)
-    itemBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    itemBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     itemBtn.Text = gName
-    itemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    itemBtn.Font = Enum.Font.Gotham
-    itemBtn.TextSize = 12
+    itemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    itemBtn.Font = Enum.Font.SourceSansBold
+    itemBtn.TextSize = 14
     itemBtn.Parent = GameListContainer
 
     itemBtn.MouseButton1Click:Connect(function()
@@ -503,10 +601,9 @@ for _, gName in ipairs(games) do
     end)
 end
 
--- 2. Script Dropdown Frame
 local ScriptDropdownFrame = Instance.new("Frame")
 ScriptDropdownFrame.Size = UDim2.new(1, -10, 0, 34)
-ScriptDropdownFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ScriptDropdownFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 ScriptDropdownFrame.ClipsDescendants = true
 ScriptDropdownFrame.Parent = MainTab
 
@@ -524,8 +621,8 @@ ScriptHeaderBtn.Size = UDim2.new(1, 0, 0, 34)
 ScriptHeaderBtn.BackgroundTransparency = 1
 ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. "None ▼"
 ScriptHeaderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ScriptHeaderBtn.Font = Enum.Font.GothamBold
-ScriptHeaderBtn.TextSize = 13
+ScriptHeaderBtn.Font = Enum.Font.SourceSansBold
+ScriptHeaderBtn.TextSize = 15
 ScriptHeaderBtn.Parent = ScriptDropdownFrame
 
 local ScriptListContainer = Instance.new("Frame")
@@ -539,10 +636,9 @@ UIListS.Parent = ScriptListContainer
 
 local scriptExpanded = false
 ScriptHeaderBtn.MouseButton1Click:Connect(function()
-    if not SelectedGame then return end -- Chưa chọn Game không mở được
+    if not SelectedGame then return end
     scriptExpanded = not scriptExpanded
     if scriptExpanded then
-        -- Refresh danh sách Script theo Game đã chọn
         for _, child in pairs(ScriptListContainer:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
         end
@@ -551,11 +647,11 @@ ScriptHeaderBtn.MouseButton1Click:Connect(function()
             count = count + 1
             local itemBtn = Instance.new("TextButton")
             itemBtn.Size = UDim2.new(1, 0, 0, 30)
-            itemBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            itemBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
             itemBtn.Text = sName
-            itemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            itemBtn.Font = Enum.Font.Gotham
-            itemBtn.TextSize = 12
+            itemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            itemBtn.Font = Enum.Font.SourceSansBold
+            itemBtn.TextSize = 14
             itemBtn.Parent = ScriptListContainer
 
             itemBtn.MouseButton1Click:Connect(function()
@@ -578,17 +674,17 @@ CreateButton(MainTab, LangData[CurrentLang]["Execute"], function()
     if SelectedUrl then loadstring(game:HttpGet(SelectedUrl))() end
 end)
 
--- ==================== TAB 2: PLAYER (SPEED / JUMP / FLY / TP) ====================
+-- ==================== TAB 2: PLAYER ====================
 local PlayerTab = containers["player"]
-local SpeedOn, SpdVal, JumpOn, JmpVal = false, 16, false, 50
+local SpeedOn, SpdVal = false, 16
+local JumpOn, JmpVal = false, 50
 
-CreateToggle(PlayerTab, LangData[CurrentLang]["SpeedToggle"], function(v)
+local tSpeed, lblSpeed = CreateToggle(PlayerTab, LangData[CurrentLang]["SpeedToggle"], function(v)
     SpeedOn = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = SpeedOn and SpdVal or 16
     end
 end)
-
 CreateInput(PlayerTab, LangData[CurrentLang]["SpeedInput"], function(t)
     local n = tonumber(t)
     if n then
@@ -599,13 +695,12 @@ CreateInput(PlayerTab, LangData[CurrentLang]["SpeedInput"], function(t)
     end
 end)
 
-CreateToggle(PlayerTab, LangData[CurrentLang]["JumpToggle"], function(v)
+local tJump, lblJump = CreateToggle(PlayerTab, LangData[CurrentLang]["JumpToggle"], function(v)
     JumpOn = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.JumpPower = JumpOn and JmpVal or 50
     end
 end)
-
 CreateInput(PlayerTab, LangData[CurrentLang]["JumpInput"], function(t)
     local n = tonumber(t)
     if n then
@@ -616,32 +711,69 @@ CreateInput(PlayerTab, LangData[CurrentLang]["JumpInput"], function(t)
     end
 end)
 
-CreateToggle(PlayerTab, LangData[CurrentLang]["GodMode"], function(v)
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = v and (LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 500, 0)) or LocalPlayer.Character.HumanoidRootPart.CFrame
+local GodModeOn = false
+local godPlatform = nil
+local tGod, lblGod = CreateToggle(PlayerTab, LangData[CurrentLang]["GodMode"], function(v)
+    GodModeOn = v
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if GodModeOn then
+        if not godPlatform then
+            godPlatform = Instance.new("Part")
+            godPlatform.Size = Vector3.new(10, 1, 10)
+            godPlatform.Transparency = 1
+            godPlatform.Anchored = true
+            godPlatform.Parent = Workspace
+        end
+        godPlatform.CFrame = hrp.CFrame + Vector3.new(0, 200, 0)
+        hrp.CFrame = godPlatform.CFrame + Vector3.new(0, 3, 0)
+    else
+        if godPlatform then godPlatform:Destroy() godPlatform = nil end
     end
 end)
 
 local FloatOn = false
-CreateButton(PlayerTab, LangData[CurrentLang]["FlyUp"], function()
+local floatBV = nil
+
+local function DisableFloat()
     FloatOn = false
+    if floatBV then floatBV:Destroy() floatBV = nil end
+end
+
+CreateButton(PlayerTab, LangData[CurrentLang]["FlyUp"], function()
+    DisableFloat()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, 10, 0) end
+    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, 15, 0) end
 end)
 
 CreateButton(PlayerTab, LangData[CurrentLang]["FlyDown"], function()
-    FloatOn = false
+    DisableFloat()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, -10, 0) end
+    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, -15, 0) end
 end)
 
-CreateToggle(PlayerTab, LangData[CurrentLang]["Float"], function(v) FloatOn = v end)
+local tFloat, lblFloat = CreateToggle(PlayerTab, LangData[CurrentLang]["Float"], function(v)
+    FloatOn = v
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if FloatOn and hrp then
+        if floatBV then floatBV:Destroy() end
+        floatBV = Instance.new("BodyVelocity")
+        floatBV.MaxForce = Vector3.new(0, 1e9, 0)
+        floatBV.Velocity = Vector3.new(0, 0, 0)
+        floatBV.Parent = hrp
+    else
+        DisableFloat()
+    end
+end)
 
 local SavedCF = nil
 local AutoTPOn, AutoTPD = false, 0
 
 CreateButton(PlayerTab, LangData[CurrentLang]["SavePos"], function()
-    if SavedCF ~= nil then return end -- Khóa lưu nếu chưa xóa cũ
+    if SavedCF ~= nil then return end
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then SavedCF = hrp.CFrame end
 end)
@@ -651,7 +783,7 @@ CreateButton(PlayerTab, LangData[CurrentLang]["TPPos"], function()
     if hrp and SavedCF then hrp.CFrame = SavedCF end
 end)
 
-CreateToggle(PlayerTab, LangData[CurrentLang]["AutoTP"], function(v)
+local tAutoTP, lblAutoTP = CreateToggle(PlayerTab, LangData[CurrentLang]["AutoTP"], function(v)
     AutoTPOn = v
     task.spawn(function()
         while AutoTPOn and SavedCF do
@@ -668,7 +800,9 @@ CreateButton(PlayerTab, LangData[CurrentLang]["DeletePos"], function() SavedCF =
 -- ==================== TAB 3: VISUAL ====================
 local VisualTab = containers["visual"]
 local FixPct = 10
+
 CreateInput(VisualTab, LangData[CurrentLang]["CustomFixLag"], function(t) if tonumber(t) then FixPct = math.clamp(tonumber(t), 10, 90) end end)
+
 CreateButton(VisualTab, LangData[CurrentLang]["ApplyFixLag"], function()
     local targets = {}
     for _, obj in pairs(Workspace:GetDescendants()) do
@@ -678,14 +812,17 @@ CreateButton(VisualTab, LangData[CurrentLang]["ApplyFixLag"], function()
     end
     for i = 1, math.floor(#targets * (FixPct / 100)) do if targets[i] then targets[i]:Destroy() end end
 end)
+
 CreateButton(VisualTab, LangData[CurrentLang]["NormalFixLag"], function()
     for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") then o.Material = Enum.Material.SmoothPlastic end end
 end)
+
 CreateButton(VisualTab, LangData[CurrentLang]["SuperFixLag"], function()
     Lighting.GlobalShadows = false
     Lighting.FogEnd = 9e9
     for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") then o.Material = Enum.Material.SmoothPlastic end end
 end)
+
 CreateButton(VisualTab, LangData[CurrentLang]["UltraFixLag"], function()
     Lighting.GlobalShadows = false
     Lighting.FogEnd = 9e9
@@ -698,23 +835,82 @@ CreateButton(VisualTab, LangData[CurrentLang]["UltraFixLag"], function()
         end
     end
 end)
-CreateToggle(VisualTab, LangData[CurrentLang]["Xray"], function(v)
+
+local EspV1On = false
+local tEspV1, lblEspV1 = CreateToggle(VisualTab, LangData[CurrentLang]["EspV1"], function(v)
+    EspV1On = v
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            if EspV1On then
+                if not player.Character:FindFirstChild("EclipserV1") then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "EclipserV1"
+                    hl.FillColor = Color3.fromRGB(0, 150, 255)
+                    hl.OutlineColor = Color3.fromRGB(0, 50, 255)
+                    hl.Parent = player.Character
+                end
+            else
+                if player.Character:FindFirstChild("EclipserV1") then player.Character.EclipserV1:Destroy() end
+            end
+        end
+    end
+end)
+
+local EspV2On = false
+local tEspV2, lblEspV2 = CreateToggle(VisualTab, LangData[CurrentLang]["EspV2"], function(v)
+    EspV2On = v
+    task.spawn(function()
+        while EspV2On do
+            local myChar = LocalPlayer.Character
+            local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            if myHrp then
+                local list = {}
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local d = (p.Character.HumanoidRootPart.Position - myHrp.Position).Magnitude
+                        if d <= 250 then table.insert(list, {plr = p, dist = d}) end
+                    end
+                end
+                table.sort(list, function(a, b) return a.dist < b.dist end)
+                for i = 1, math.min(7, #list) do
+                    local char = list[i].plr.Character
+                    if char and not char:FindFirstChild("EclipserV2Box") then
+                        local b = Instance.new("SelectionBox")
+                        b.Name = "EclipserV2Box"
+                        b.Color3 = Color3.fromRGB(255, 255, 255)
+                        b.Adornee = char
+                        b.Parent = char
+                    end
+                end
+            end
+            task.wait(0.5)
+        end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("EclipserV2Box") then p.Character.EclipserV2Box:Destroy() end
+        end
+    end)
+end)
+
+local tXray, lblXray = CreateToggle(VisualTab, LangData[CurrentLang]["Xray"], function(v)
     for _, o in pairs(Workspace:GetDescendants()) do if o:IsA("BasePart") and not o.Parent:FindFirstChild("Humanoid") then o.LocalTransparencyModifier = v and 0.6 or 0 end end
 end)
-CreateToggle(VisualTab, LangData[CurrentLang]["InfZoom"], function(v) LocalPlayer.CameraMaxZoomDistance = v and 999999 or 128 end)
 
--- ==================== TAB 4: SETTING (ĐẦY ĐỦ CẤU HÌNH) ====================
+local tInfZoom, lblInfZoom = CreateToggle(VisualTab, LangData[CurrentLang]["InfZoom"], function(v)
+    LocalPlayer.CameraMaxZoomDistance = v and 999999 or 128
+end)
+
+-- ==================== TAB 4: SETTING ====================
 local SettingTab = containers["setting"]
 
 CreateButton(SettingTab, LangData[CurrentLang]["DefaultColor"], function()
-    MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 end)
 
-CreateToggle(SettingTab, LangData[CurrentLang]["RotateToggle"], function(v)
+local tRotate, lblRotate = CreateToggle(SettingTab, LangData[CurrentLang]["RotateToggle"], function(v)
     RotateEnabled = v
 end)
 
-CreateToggle(SettingTab, LangData[CurrentLang]["ShowFloat"], function(v)
+local tShowFloat, lblShowFloat = CreateToggle(SettingTab, LangData[CurrentLang]["ShowFloat"], function(v)
     DynamicIsland.Visible = v
 end)
 
@@ -724,23 +920,35 @@ CreateButton(OtherTab, "Tiktok Script: None", function() end)
 CreateButton(OtherTab, "Discord Script: None", function() end)
 CreateButton(OtherTab, "Youtube Script: None", function() end)
 
--- ==================== LOGIC ĐỔI NGÔN NGỮ CỦA DYNAMIC ISLAND ====================
+-- ==================== LOGIC ĐỔI NGÔN NGỮ ====================
 local function UpdateLanguage(lang)
     CurrentLang = lang
     if CurrentLang == "EN" then
         BtnEN.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         BtnEN.TextColor3 = Color3.fromRGB(0, 0, 0)
-        BtnVN.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        BtnVN.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         BtnVN.TextColor3 = Color3.fromRGB(255, 255, 255)
     else
         BtnVN.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         BtnVN.TextColor3 = Color3.fromRGB(0, 0, 0)
-        BtnEN.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        BtnEN.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         BtnEN.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
     GameHeaderBtn.Text = LangData[CurrentLang]["SelectGame"] .. (SelectedGame or "None") .. " ▼"
     ScriptHeaderBtn.Text = LangData[CurrentLang]["SelectScript"] .. (SelectedScript or "None") .. " ▼"
+
+    lblSpeed.Text = "  " .. LangData[CurrentLang]["SpeedToggle"]
+    lblJump.Text = "  " .. LangData[CurrentLang]["JumpToggle"]
+    lblGod.Text = "  " .. LangData[CurrentLang]["GodMode"]
+    lblFloat.Text = "  " .. LangData[CurrentLang]["Float"]
+    lblAutoTP.Text = "  " .. LangData[CurrentLang]["AutoTP"]
+    lblEspV1.Text = "  " .. LangData[CurrentLang]["EspV1"]
+    lblEspV2.Text = "  " .. LangData[CurrentLang]["EspV2"]
+    lblXray.Text = "  " .. LangData[CurrentLang]["Xray"]
+    lblInfZoom.Text = "  " .. LangData[CurrentLang]["InfZoom"]
+    lblRotate.Text = "  " .. LangData[CurrentLang]["RotateToggle"]
+    lblShowFloat.Text = "  " .. LangData[CurrentLang]["ShowFloat"]
 end
 
 BtnEN.MouseButton1Click:Connect(function() UpdateLanguage("EN") end)
