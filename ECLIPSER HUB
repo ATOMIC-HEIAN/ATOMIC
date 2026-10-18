@@ -1,0 +1,391 @@
+-- [[ ECLIPSER HUB - FULL SYSTEM WITH VIETNAMESE & ENGLISH ]]
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+if CoreGui:FindFirstChild("EclipserHubUI") then
+    CoreGui.EclipserHubUI:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "EclipserHubUI"
+ScreenGui.Parent = CoreGui
+
+-- 1. NÚT TOGGLE ECLIPSER KÉO THẢ GÓC DƯỚI BÊN TRÁI
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "EclipserToggle"
+ToggleBtn.Size = UDim2.new(0, 80, 0, 80)
+ToggleBtn.Position = UDim2.new(0, 30, 1, -110)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+ToggleBtn.Text = "eclipser"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 16
+ToggleBtn.Font = Enum.Font.FredokaOne
+ToggleBtn.Parent = ScreenGui
+
+local UICornerToggle = Instance.new("UICorner")
+UICornerToggle.CornerRadius = UDim.new(0, 16)
+UICornerToggle.Parent = ToggleBtn
+
+-- Logic Kéo Thả Nút Toggle
+local dragging, dragInput, dragStart, startPos
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleBtn.Position
+    end
+end)
+ToggleBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- 2. KHUNG MENU CHÍNH
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 520, 0, 290)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -145)
+MainFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+local UICornerMain = Instance.new("UICorner")
+UICornerMain.CornerRadius = UDim.new(0, 16)
+UICornerMain.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 200, 0, 40)
+Title.Position = UDim2.new(0, 160, 0, 5)
+Title.BackgroundTransparency = 1
+Title.Text = "eclipser hub"
+Title.TextColor3 = Color3.fromRGB(0, 0, 0)
+Title.TextSize = 22
+Title.Font = Enum.Font.FredokaOne
+Title.Parent = MainFrame
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 35, 0, 30)
+MinimizeBtn.Position = UDim2.new(1, -85, 0, 10)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.Text = "━"
+MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Parent = MainFrame
+
+local UICornerMin = Instance.new("UICorner")
+UICornerMin.CornerRadius = UDim.new(0, 6)
+UICornerMin.Parent = MinimizeBtn
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 35, 0, 30)
+CloseBtn.Position = UDim2.new(1, -45, 0, 10)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Text = "✖"
+CloseBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = MainFrame
+
+local UICornerClose = Instance.new("UICorner")
+UICornerClose.CornerRadius = UDim.new(0, 6)
+UICornerClose.Parent = CloseBtn
+
+local menuVisible = true
+local function toggleMenu()
+    menuVisible = not menuVisible
+    if menuVisible then
+        MainFrame.Visible = true
+        MainFrame:TweenSize(UDim2.new(0, 520, 0, 290), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.3, true)
+    else
+        MainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.2, true, function()
+            MainFrame.Visible = false
+        end)
+    end
+end
+
+ToggleBtn.MouseButton1Click:Connect(toggleMenu)
+MinimizeBtn.MouseButton1Click:Connect(toggleMenu)
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- NÚT FLOAT ĐỔI NGÔN NGỮ NHANH (MẶC ĐỊNH HIỆN KHU VỰC TRÊN MÀN HÌNH)
+local FloatLangBtn = Instance.new("TextButton")
+FloatLangBtn.Name = "FloatLangBtn"
+FloatLangBtn.Size = UDim2.new(0, 50, 0, 50)
+FloatLangBtn.Position = UDim2.new(0, 30, 0.5, -25)
+FloatLangBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+FloatLangBtn.Text = "🌐 EN"
+FloatLangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatLangBtn.Font = Enum.Font.GothamBold
+FloatLangBtn.TextSize = 14
+FloatLangBtn.Parent = ScreenGui
+
+local UICornerFloat = Instance.new("UICorner")
+UICornerFloat.CornerRadius = UDim.new(1, 0)
+UICornerFloat.Parent = FloatLangBtn
+
+local isVietnamese = false
+FloatLangBtn.MouseButton1Click:Connect(function()
+    isVietnamese = not isVietnamese
+    FloatLangBtn.Text = isVietnamese and "🌐 VN" or "🌐 EN"
+end)
+
+-- CỘT TAB BÊN TRÁI
+local TabHolder = Instance.new("ScrollingFrame")
+TabHolder.Size = UDim2.new(0, 120, 1, -50)
+TabHolder.Position = UDim2.new(0, 10, 0, 45)
+TabHolder.BackgroundTransparency = 1
+TabHolder.CanvasSize = UDim2.new(0, 0, 0, 240)
+TabHolder.ScrollBarThickness = 3
+TabHolder.Parent = MainFrame
+
+local UIListTab = Instance.new("UIListLayout")
+UIListTab.Padding = UDim.new(0, 6)
+UIListTab.Parent = TabHolder
+
+local tabs = {"main", "player", "visual", "setting", "other"}
+local containers = {}
+
+for i, tabName in ipairs(tabs) do
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Size = UDim2.new(1, -5, 0, 38)
+    TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(230, 230, 230)
+    TabBtn.Text = tabName
+    TabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    TabBtn.TextSize = 16
+    TabBtn.Font = Enum.Font.FredokaOne
+    TabBtn.Parent = TabHolder
+
+    local UICornerTab = Instance.new("UICorner")
+    UICornerTab.CornerRadius = UDim.new(0, 10)
+    UICornerTab.Parent = TabBtn
+
+    local Container = Instance.new("ScrollingFrame")
+    Container.Name = tabName .. "_Container"
+    Container.Size = UDim2.new(1, -150, 1, -55)
+    Container.Position = UDim2.new(0, 140, 0, 45)
+    Container.BackgroundTransparency = 1
+    Container.Visible = (i == 1)
+    Container.CanvasSize = UDim2.new(0, 0, 3, 0) -- Thiết kế khung vuốt
+    Container.ScrollBarThickness = 4
+    Container.Parent = MainFrame
+
+    local UIListC = Instance.new("UIListLayout")
+    UIListC.Padding = UDim.new(0, 6)
+    UIListC.Parent = Container
+
+    containers[tabName] = Container
+
+    TabBtn.MouseButton1Click:Connect(function()
+        for _, c in pairs(containers) do c.Visible = false end
+        for _, b in pairs(TabHolder:GetChildren()) do
+            if b:IsA("TextButton") then b.BackgroundColor3 = Color3.fromRGB(230, 230, 230) end
+        end
+        Container.Visible = true
+        TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+end
+
+-- BỘ DỤNG CỤ TẠO GIAO DIỆN HỖ TRỢ (UI ELEMENTS)
+local function CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -10, 0, 32)
+    btn.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    btn.TextSize = 13
+    btn.Font = Enum.Font.GothamBold
+    btn.Parent = parent
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = btn
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local function CreateToggle(parent, text, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -10, 0, 32)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "  " .. text
+    label.TextColor3 = Color3.fromRGB(0, 0, 0)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamBold
+    label.Parent = frame
+
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 46, 0, 22)
+    toggle.Position = UDim2.new(1, -50, 0.5, -11)
+    toggle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    toggle.Text = ""
+    toggle.Parent = frame
+
+    local tc = Instance.new("UICorner")
+    tc.CornerRadius = UDim.new(1, 0)
+    tc.Parent = toggle
+
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0, 18, 0, 18)
+    circle.Position = UDim2.new(0, 2, 0.5, -9)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.Parent = toggle
+
+    local cc = Instance.new("UICorner")
+    cc.CornerRadius = UDim.new(1, 0)
+    cc.Parent = circle
+
+    local state = false
+    toggle.MouseButton1Click:Connect(function()
+        state = not state
+        if state then
+            toggle.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            circle:TweenPosition(UDim2.new(1, -20, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+        else
+            toggle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+            circle:TweenPosition(UDim2.new(0, 2, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+        end
+        callback(state)
+    end)
+    return frame
+end
+
+local function CreateInput(parent, placeholder, callback)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, -10, 0, 32)
+    box.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.TextColor3 = Color3.fromRGB(0, 0, 0)
+    box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    box.TextSize = 13
+    box.Font = Enum.Font.GothamBold
+    box.Parent = parent
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = box
+    box.FocusLost:Connect(function(enter)
+        if enter then callback(box.Text) end
+    end)
+    return box
+end
+
+-- ==================== 1. TAB MAIN ====================
+local MainTab = containers["main"]
+CreateButton(MainTab, "1. Select Game / Chọn Game", function() end)
+CreateButton(MainTab, "2. Select Script / Chọn Script", function() end)
+CreateButton(MainTab, "⚡ EXECUTE SCRIPT", function() end)
+
+-- ==================== 2. TAB PLAYER ====================
+local PlayerTab = containers["player"]
+local SpeedEnabled, CustomSpeed = false, 16
+local JumpEnabled, CustomJump = 50
+
+-- Normal
+CreateToggle(PlayerTab, "Speed (Tốc độ)", function(v)
+    SpeedEnabled = v
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = SpeedEnabled and CustomSpeed or 16
+    end
+end)
+CreateInput(PlayerTab, "Enter Speed / Nhập số speed", function(t)
+    local n = tonumber(t)
+    if n then CustomSpeed = n end
+end)
+CreateToggle(PlayerTab, "Jump (Độ cao nhảy)", function(v)
+    JumpEnabled = v
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = JumpEnabled and CustomJump or 50
+    end
+end)
+CreateInput(PlayerTab, "Enter Jump / Nhập số jump", function(t)
+    local n = tonumber(t)
+    if n then CustomJump = n end
+end)
+CreateToggle(PlayerTab, "God Mode (Hitbox Trên Trời)", function(v) end)
+
+-- Fly
+CreateButton(PlayerTab, "Fly Up (Bay Lên)", function()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, 5, 0) end
+end)
+CreateButton(PlayerTab, "Fly Down (Bay Xuống)", function()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = hrp.CFrame * CFrame.new(0, -5, 0) end
+end)
+CreateToggle(PlayerTab, "Float (Đứng Im Trên Không)", function(v) end)
+
+-- TP
+local SavedCFrame = nil
+CreateButton(PlayerTab, "Save Vị Trí (Save Pos)", function()
+    if SavedCFrame == nil and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        SavedCFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+    end
+end)
+CreateButton(PlayerTab, "TP Đến Vị Trí (Teleport)", function()
+    if SavedCFrame and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = SavedCFrame
+    end
+end)
+CreateToggle(PlayerTab, "Tự Động TP (Auto TP)", function(v) end)
+CreateInput(PlayerTab, "Thời Gian Auto TP (0 - 100s)", function(t) end)
+CreateButton(PlayerTab, "Xóa Vị Trí Cũ (Delete Pos)", function()
+    SavedCFrame = nil
+end)
+
+-- ==================== 3. TAB VISUAL ====================
+local VisualTab = containers["visual"]
+
+-- Fix Lag
+CreateInput(VisualTab, "Xóa % Đồ Họa (10 - 90%)", function(t) end)
+CreateButton(VisualTab, "Fix Lag Thông Thường", function()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then obj.Material = Enum.Material.SmoothPlastic end
+    end
+end)
+CreateButton(VisualTab, "Super Fix Lag", function() end)
+CreateButton(VisualTab, "Ultra Fix Lag (Full Xám)", function() end)
+
+-- ESP & Zoom
+CreateToggle(VisualTab, "Layout Kính Trong Suốt", function(v) end)
+CreateToggle(VisualTab, "ESP Player V1 (Xanh + Tên)", function(v) end)
+CreateToggle(VisualTab, "ESP Player V2 (Box 250m & 7 Ng)", function(v) end)
+CreateToggle(VisualTab, "Inf Zoom (Zoom Vô Hạn)", function(v)
+    LocalPlayer.CameraMaxZoomDistance = v and 999999 or 128
+end)
+
+-- ==================== 4. TAB SETTING ====================
+local SettingTab = containers["setting"]
+CreateButton(SettingTab, "Màu Gốc (Default Color)", function() end)
+CreateToggle(SettingTab, "Màu Cầu Vồng (Rainbow RGB)", function(v) end)
+CreateToggle(SettingTab, "Hiện Nút Float Chỉnh Tiếng", function(v)
+    FloatLangBtn.Visible = v
+end)
+
+-- ==================== 5. TAB OTHER ====================
+local OtherTab = containers["other"]
+CreateButton(OtherTab, "Tiktok Script: Chưa có", function() end)
+CreateButton(OtherTab, "Discord Script: Chưa có", function() end)
+CreateButton(OtherTab, "Youtube Script: Chưa có", function() end)
