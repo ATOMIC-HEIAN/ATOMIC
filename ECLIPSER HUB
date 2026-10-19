@@ -1,8 +1,8 @@
--- [[ ECLIPSER HUB - BREAK AND STEAL AN EGG AUTO RETURN ]]
+-- [[ ECLIPSER HUB - BREAK AND STEAL AN EGG (DEEP DEEP ENGINE) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 if CoreGui:FindFirstChild("EclipserHubUI") then
@@ -13,17 +13,14 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
 
--- Variable Logic
 local SavedCFrame = nil
-local DelayReturnTime = 0 -- Mặc định 0s
-local FlySpeed = 350
-local IsCheckingPet = true
+local CurrentLang = "VN"
 
--- ==================== 1. DYNAMIC ISLAND (THÔNG BÁO & DỰ LIỆU) ====================
+-- ==================== 1. DYNAMIC ISLAND ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
-DynamicIsland.Size = UDim2.new(0, 280, 0, 36)
-DynamicIsland.Position = UDim2.new(0.5, -140, 0, 15)
+DynamicIsland.Size = UDim2.new(0, 300, 0, 36)
+DynamicIsland.Position = UDim2.new(0.5, -150, 0, 12)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DynamicIsland.Parent = ScreenGui
 
@@ -37,28 +34,28 @@ UIStrokeIsland.Thickness = 2
 UIStrokeIsland.Parent = DynamicIsland
 
 local StatusText = Instance.new("TextLabel")
-StatusText.Size = UDim2.new(1, 0, 1, 0)
+StatusText.Size = UDim2.new(1, -50, 1, 0)
+StatusText.Position = UDim2.new(0, 10, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "🔍 Đang kiểm tra nhặt pet..."
+StatusText.Text = "🔍 Đang quét sâu hệ thống game..."
 StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
 StatusText.Font = Enum.Font.SourceSansBold
-StatusText.TextSize = 14
+StatusText.TextSize = 13
+StatusText.TextXAlignment = Enum.TextXAlignment.Left
 StatusText.Parent = DynamicIsland
 
--- Dynamic Island Ngôn ngữ (Góc phải)
-local CurrentLang = "VN"
 local LangBtn = Instance.new("TextButton")
-LangBtn.Size = UDim2.new(0, 45, 0, 24)
-LangBtn.Position = UDim2.new(1, -50, 0.5, -12)
-LangBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+LangBtn.Size = UDim2.new(0, 36, 0, 22)
+LangBtn.Position = UDim2.new(1, -40, 0.5, -11)
+LangBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 LangBtn.Text = "VN"
-LangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LangBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 LangBtn.Font = Enum.Font.SourceSansBold
 LangBtn.TextSize = 12
-LangBtn.Parent = ScreenGui
+LangBtn.Parent = DynamicIsland
 
 local UICornerLang = Instance.new("UICorner")
-UICornerLang.CornerRadius = UDim.new(0, 6)
+UICornerLang.CornerRadius = UDim.new(1, 0)
 UICornerLang.Parent = LangBtn
 
 -- ==================== 2. TOGGLE ECLIPSER ====================
@@ -107,11 +104,11 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ==================== 3. MAIN FRAME (NỀN ĐEN + VIỀN CẦU VỒNG) ====================
+-- ==================== 3. MAIN FRAME (CẦU VỒNG 360°) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 310, 0, 230)
-MainFrame.Position = UDim2.new(0.5, -155, 0.5, -115)
+MainFrame.Size = UDim2.new(0, 290, 0, 160)
+MainFrame.Position = UDim2.new(0.5, -145, 0.5, -80)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
@@ -147,8 +144,8 @@ task.spawn(function()
 end)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -50, 0, 35)
-Title.Position = UDim2.new(0, 12, 0, 3)
+Title.Size = UDim2.new(1, -40, 0, 35)
+Title.Position = UDim2.new(0, 12, 0, 2)
 Title.BackgroundTransparency = 1
 Title.Text = "eclipser hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -158,17 +155,17 @@ Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = MainFrame
 
 local MinimizeBtn = Instance.new("TextButton")
-MinimizeBtn.Size = UDim2.new(0, 28, 0, 24)
-MinimizeBtn.Position = UDim2.new(1, -34, 0, 6)
+MinimizeBtn.Size = UDim2.new(0, 26, 0, 22)
+MinimizeBtn.Position = UDim2.new(1, -32, 0, 6)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 MinimizeBtn.Text = "━"
 MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
-MinimizeBtn.TextSize = 14
+MinimizeBtn.TextSize = 12
 MinimizeBtn.Parent = MainFrame
 
 local UICornerMin = Instance.new("UICorner")
-UICornerMin.CornerRadius = UDim.new(0, 5)
+UICornerMin.CornerRadius = UDim.new(0, 4)
 UICornerMin.Parent = MinimizeBtn
 
 local menuVisible = true
@@ -180,90 +177,50 @@ end
 ToggleBtn.MouseButton1Click:Connect(toggleMenu)
 MinimizeBtn.MouseButton1Click:Connect(toggleMenu)
 
-local Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1, -16, 1, -45)
-Container.Position = UDim2.new(0, 8, 0, 38)
+local Container = Instance.new("Frame")
+Container.Size = UDim2.new(1, -20, 1, -45)
+Container.Position = UDim2.new(0, 10, 0, 40)
 Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 0, 200)
-Container.ScrollBarThickness = 2
 Container.Parent = MainFrame
 
-local UIList = Instance.new("UIListLayout")
-UIList.Padding = UDim.new(0, 6)
-UIList.Parent = Container
-
--- ==================== 4. NGÔN NGỮ DICTIONARY ====================
+-- Ngôn ngữ
 local LangData = {
     ["VN"] = {
-        ["SavePos"] = "Lưu Vị Trí Nhà (Base)",
-        ["DelayInput"] = "Thời gian dịch chuyển khi trộm pet (0-3s)",
-        ["CheckPet"] = "🔍 Đang kiểm tra nhặt pet...",
-        ["Detected"] = "⚠️ Phát hiện trộm pet! Đang dịch chuyển...",
-        ["Done"] = "✅ Đã lấy được pet thành công!",
-        ["Saved"] = "Đã Lưu Nhà thành công!"
+        ["SavePos"] = "📍 Save Vị Trí Về Nhà",
+        ["Saved"] = "✅ Đã Lưu Vị Trí Thành Công!",
+        ["CheckPet"] = "🔍 Đang quét sâu hệ thống game...",
+        ["Detected"] = "⚡ ĐÃ TRỘM PET! INSTANT TP (0s)...",
+        ["Done"] = "🎉 Hoàn thành trộm & đã về nhà!"
     },
     ["EN"] = {
-        ["SavePos"] = "Save Base Position",
-        ["DelayInput"] = "Steal teleport delay (0-3s)",
-        ["CheckPet"] = "🔍 Checking for pet pickup...",
-        ["Detected"] = "⚠️ Pet stolen detected! Teleporting...",
-        ["Done"] = "✅ Pet successfully stolen!",
-        ["Saved"] = "Base Position Saved!"
+        ["SavePos"] = "📍 Save Base Position",
+        ["Saved"] = "✅ Position Saved!",
+        ["CheckPet"] = "🔍 Scanning game core...",
+        ["Detected"] = "⚡ STOLEN PET DETECTED! TP (0s)...",
+        ["Done"] = "🎉 Stolen & Teleported home!"
     }
 }
 
-local function CreateButton(parent, text, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 32)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 13
-    btn.Font = Enum.Font.SourceSansBold
-    btn.Parent = parent
+local SaveBtn = Instance.new("TextButton")
+SaveBtn.Size = UDim2.new(1, 0, 0, 38)
+SaveBtn.Position = UDim2.new(0, 0, 0, 10)
+SaveBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+SaveBtn.Text = LangData[CurrentLang]["SavePos"]
+SaveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SaveBtn.TextSize = 14
+SaveBtn.Font = Enum.Font.SourceSansBold
+SaveBtn.Parent = Container
 
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 6)
-    c.Parent = btn
+local cSave = Instance.new("UICorner")
+cSave.CornerRadius = UDim.new(0, 8)
+cSave.Parent = SaveBtn
 
-    local s = Instance.new("UIStroke")
-    s.Color = Color3.fromRGB(255, 255, 255)
-    s.Thickness = 1
-    s.Parent = btn
+local sSave = Instance.new("UIStroke")
+sSave.Color = Color3.fromRGB(255, 255, 255)
+sSave.Thickness = 1
+sSave.Parent = SaveBtn
 
-    btn.MouseButton1Click:Connect(callback)
-    return btn
-end
-
-local function CreateInput(parent, placeholder, callback)
-    local box = Instance.new("TextBox")
-    box.Size = UDim2.new(1, 0, 0, 32)
-    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    box.PlaceholderText = placeholder
-    box.Text = ""
-    box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-    box.TextSize = 12
-    box.Font = Enum.Font.SourceSansBold
-    box.Parent = parent
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 6)
-    c.Parent = box
-
-    local s = Instance.new("UIStroke")
-    s.Color = Color3.fromRGB(255, 255, 255)
-    s.Thickness = 1
-    s.Parent = box
-
-    box.FocusLost:Connect(function(enter)
-        if enter then callback(box.Text) end
-    end)
-    return box
-end
-
--- UI Controls
-local SaveBtn = CreateButton(Container, LangData[CurrentLang]["SavePos"], function()
+SaveBtn.MouseButton1Click:Connect(function()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
         SavedCFrame = hrp.CFrame
@@ -273,71 +230,85 @@ local SaveBtn = CreateButton(Container, LangData[CurrentLang]["SavePos"], functi
     end
 end)
 
-local DelayInput = CreateInput(Container, LangData[CurrentLang]["DelayInput"], function(t)
-    local n = tonumber(t)
-    if n then
-        DelayReturnTime = math.clamp(n, 0, 3)
-    end
-end)
-
--- ==================== 5. CHỨC NĂNG PHÁT HIỆN TRỘM PET THẬT TRONG GAME ====================
-local isFlyingBack = false
-
-local function FlyBackToBase()
-    if not SavedCFrame or isFlyingBack then return end
-    isFlyingBack = true
-
-    -- Đợi theo số giây cài đặt (0-3s)
-    if DelayReturnTime > 0 then
-        for i = DelayReturnTime, 1, -1 do
-            StatusText.Text = LangData[CurrentLang]["Detected"] .. " (" .. i .. "s)"
-            task.wait(1)
-        end
-    end
-
-    StatusText.Text = LangData[CurrentLang]["Detected"]
+-- ==================== 4. HÀM DỊCH CHUYỂN TỨC THÌ 0S ====================
+local lastTPTime = 0
+local function TriggerInstantTP()
+    if not SavedCFrame then return end
+    if tick() - lastTPTime < 1 then return end -- Chống spam vụn
+    lastTPTime = tick()
 
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-    if hrp and SavedCFrame then
-        local bv = Instance.new("BodyVelocity")
-        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-        bv.Velocity = Vector3.new(0, 0, 0)
-        bv.Parent = hrp
-
-        while (hrp.Position - SavedCFrame.Position).Magnitude > 6 do
-            local dir = (SavedCFrame.Position - hrp.Position).Unit
-            bv.Velocity = dir * FlySpeed
-            task.wait(0.02)
-        end
-
-        bv:Destroy()
-        hrp.CFrame = SavedCFrame
+    if hrp then
+        StatusText.Text = LangData[CurrentLang]["Detected"]
+        hrp.CFrame = SavedCFrame -- Instant TP 0s
+        task.wait(0.1)
+        hrp.CFrame = SavedCFrame -- Double Check chống rollback
         StatusText.Text = LangData[CurrentLang]["Done"]
-        task.wait(2)
+        task.wait(1.5)
+        StatusText.Text = LangData[CurrentLang]["CheckPet"]
     end
-
-    StatusText.Text = LangData[CurrentLang]["CheckPet"]
-    isFlyingBack = false
 end
 
--- Lắng nghe sự kiện cầm/nhặt pet hoặc trứng vào túi
-local function OnCharacterAdded(char)
+-- ==================== 5. ĐÀO SÂU QUÉT HỆ THỐNG GAME ====================
+
+-- CÁCH 1: Bắt sự kiện RemoteEvent trong ReplicatedStorage (Chuyên dùng cho Break/Steal Egg)
+task.spawn(function()
+    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("UnreliableRemoteEvent") then
+            local name = string.lower(v.Name)
+            if string.find(name, "steal") or string.find(name, "egg") or string.find(name, "pet") or string.find(name, "grab") or string.find(name, "take") then
+                v.OnClientEvent:Connect(function(...)
+                    TriggerInstantTP()
+                end)
+            end
+        end
+    end
+end)
+
+-- CÁCH 2: Quét Attribute và Value biến đổi trên Character (Dấu hiệu đang ôm/vác trứng)
+local function HookCharacter(char)
+    if not char then return end
+
+    -- Lắng nghe xem game có gắn Attribute như "Holding", "HasEgg", "Carrying" vào nhân vật không
+    char.AttributeChanged:Connect(function(attr)
+        local attrLower = string.lower(attr)
+        if string.find(attrLower, "egg") or string.find(attrLower, "hold") or string.find(attrLower, "carry") or string.find(attrLower, "pet") or string.find(attrLower, "steal") then
+            if char:GetAttribute(attr) == true or char:GetAttribute(attr) == 1 then
+                TriggerInstantTP()
+            end
+        end
+    end)
+
+    -- Lắng nghe ChildAdded (Chất trứng/vật phẩm vào người)
     char.ChildAdded:Connect(function(child)
-        -- Kiểm tra nếu vật phẩm cầm vào là Pet/Egg
-        if child:IsA("Tool") or string.find(string.lower(child.Name), "egg") or string.find(string.lower(child.Name), "pet") then
-            task.spawn(FlyBackToBase)
+        local cName = string.lower(child.Name)
+        if child:IsA("Tool") or child:IsA("Model") or string.find(cName, "egg") or string.find(cName, "pet") or string.find(cName, "carrier") then
+            TriggerInstantTP()
         end
     end)
 end
 
-if LocalPlayer.Character then
-    OnCharacterAdded(LocalPlayer.Character)
-end
-LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
+if LocalPlayer.Character then HookCharacter(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(HookCharacter)
 
--- ==================== 6. ĐỔI NGÔN NGỮ ====================
+-- CÁCH 3: Quét Backpack (Túi đồ)
+local function HookBackpack(bp)
+    if not bp then return end
+    bp.ChildAdded:Connect(function(child)
+        local cName = string.lower(child.Name)
+        if string.find(cName, "egg") or string.find(cName, "pet") then
+            TriggerInstantTP()
+        end
+    end)
+end
+if LocalPlayer:FindFirstChildOfClass("Backpack") then HookBackpack(LocalPlayer:FindFirstChildOfClass("Backpack")) end
+LocalPlayer.ChildAdded:Connect(function(child)
+    if child:IsA("Backpack") then HookBackpack(child) end
+end)
+
+-- ==================== 6. CHUYỂN NGÔN NGỮ ====================
 LangBtn.MouseButton1Click:Connect(function()
     if CurrentLang == "VN" then
         CurrentLang = "EN"
@@ -347,6 +318,5 @@ LangBtn.MouseButton1Click:Connect(function()
         LangBtn.Text = "VN"
     end
     SaveBtn.Text = LangData[CurrentLang]["SavePos"]
-    DelayInput.PlaceholderText = LangData[CurrentLang]["DelayInput"]
     StatusText.Text = LangData[CurrentLang]["CheckPet"]
 end)
