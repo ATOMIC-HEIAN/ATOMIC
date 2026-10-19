@@ -1,7 +1,8 @@
--- [[ ECLIPSER HUB - REAL WORKING TELEPORT / FLY / RUN / LANG ]]
+-- [[ ECLIPSER HUB - BREAK AND STEAL AN EGG AUTO RETURN ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
 if CoreGui:FindFirstChild("EclipserHubUI") then
@@ -12,13 +13,17 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
 
--- ==================== 1. DYNAMIC ISLAND (NGÔN NGỮ EN / VN) ====================
-local CurrentLang = "EN"
+-- Variable Logic
+local SavedCFrame = nil
+local DelayReturnTime = 0 -- Mặc định 0s
+local FlySpeed = 350
+local IsCheckingPet = true
 
+-- ==================== 1. DYNAMIC ISLAND (THÔNG BÁO & DỰ LIỆU) ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
-DynamicIsland.Size = UDim2.new(0, 140, 0, 38)
-DynamicIsland.Position = UDim2.new(0.5, -70, 0, 15)
+DynamicIsland.Size = UDim2.new(0, 280, 0, 36)
+DynamicIsland.Position = UDim2.new(0.5, -140, 0, 15)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DynamicIsland.Parent = ScreenGui
 
@@ -31,109 +36,45 @@ UIStrokeIsland.Color = Color3.fromRGB(255, 255, 255)
 UIStrokeIsland.Thickness = 2
 UIStrokeIsland.Parent = DynamicIsland
 
-local BtnEN = Instance.new("TextButton")
-BtnEN.Size = UDim2.new(0.5, -4, 1, -6)
-BtnEN.Position = UDim2.new(0, 3, 0, 3)
-BtnEN.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-BtnEN.Text = "EN"
-BtnEN.TextColor3 = Color3.fromRGB(0, 0, 0)
-BtnEN.Font = Enum.Font.SourceSansBold
-BtnEN.TextSize = 15
-BtnEN.Parent = DynamicIsland
+local StatusText = Instance.new("TextLabel")
+StatusText.Size = UDim2.new(1, 0, 1, 0)
+StatusText.BackgroundTransparency = 1
+StatusText.Text = "🔍 Đang kiểm tra nhặt pet..."
+StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusText.Font = Enum.Font.SourceSansBold
+StatusText.TextSize = 14
+StatusText.Parent = DynamicIsland
 
-local CornerEN = Instance.new("UICorner")
-CornerEN.CornerRadius = UDim.new(1, 0)
-CornerEN.Parent = BtnEN
+-- Dynamic Island Ngôn ngữ (Góc phải)
+local CurrentLang = "VN"
+local LangBtn = Instance.new("TextButton")
+LangBtn.Size = UDim2.new(0, 45, 0, 24)
+LangBtn.Position = UDim2.new(1, -50, 0.5, -12)
+LangBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+LangBtn.Text = "VN"
+LangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LangBtn.Font = Enum.Font.SourceSansBold
+LangBtn.TextSize = 12
+LangBtn.Parent = ScreenGui
 
-local BtnVN = Instance.new("TextButton")
-BtnVN.Size = UDim2.new(0.5, -4, 1, -6)
-BtnVN.Position = UDim2.new(0.5, 1, 0, 3)
-BtnVN.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-BtnVN.Text = "VN"
-BtnVN.TextColor3 = Color3.fromRGB(255, 255, 255)
-BtnVN.Font = Enum.Font.SourceSansBold
-BtnVN.TextSize = 15
-BtnVN.Parent = DynamicIsland
+local UICornerLang = Instance.new("UICorner")
+UICornerLang.CornerRadius = UDim.new(0, 6)
+UICornerLang.Parent = LangBtn
 
-local CornerVN = Instance.new("UICorner")
-CornerVN.CornerRadius = UDim.new(1, 0)
-CornerVN.Parent = BtnVN
-
--- ==================== 2. NÚT FLOAT CHỌN CHẾ ĐỘ (RUN / FLY) ====================
-local MoveMode = "Run"
-local FlySpeed = 350
-
-local ModeFloatBtn = Instance.new("TextButton")
-ModeFloatBtn.Name = "ModeFloatBtn"
-ModeFloatBtn.Size = UDim2.new(0, 120, 0, 38)
-ModeFloatBtn.Position = UDim2.new(1, -140, 0.5, -19)
-ModeFloatBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-ModeFloatBtn.Text = "Mode: RUN 🏃"
-ModeFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ModeFloatBtn.Font = Enum.Font.SourceSansBold
-ModeFloatBtn.TextSize = 14
-ModeFloatBtn.Parent = ScreenGui
-
-local UICornerFloatMode = Instance.new("UICorner")
-UICornerFloatMode.CornerRadius = UDim.new(0, 10)
-UICornerFloatMode.Parent = ModeFloatBtn
-
-local UIStrokeFloatMode = Instance.new("UIStroke")
-UIStrokeFloatMode.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeFloatMode.Thickness = 2
-UIStrokeFloatMode.Parent = ModeFloatBtn
-
-local dragFloat, dragInputFloat, dragStartFloat, startPosFloat
-ModeFloatBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragFloat = true
-        dragStartFloat = input.Position
-        startPosFloat = ModeFloatBtn.Position
-    end
-end)
-ModeFloatBtn.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInputFloat = input
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInputFloat and dragFloat then
-        local delta = input.Position - dragStartFloat
-        ModeFloatBtn.Position = UDim2.new(startPosFloat.X.Scale, startPosFloat.X.Offset + delta.X, startPosFloat.Y.Scale, startPosFloat.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragFloat = false
-    end
-end)
-
-ModeFloatBtn.MouseButton1Click:Connect(function()
-    if MoveMode == "Run" then
-        MoveMode = "Fly"
-        ModeFloatBtn.Text = "Mode: FLY 🕊️"
-        ModeFloatBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    else
-        MoveMode = "Run"
-        ModeFloatBtn.Text = "Mode: RUN 🏃"
-        ModeFloatBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    end
-end)
-
--- ==================== 3. TOGGLE ECLIPSER ====================
+-- ==================== 2. TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
-ToggleBtn.Size = UDim2.new(0, 60, 0, 60)
-ToggleBtn.Position = UDim2.new(0, 20, 1, -80)
+ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+ToggleBtn.Position = UDim2.new(0, 15, 1, -65)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleBtn.Text = "eclipser"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 15
+ToggleBtn.TextSize = 12
 ToggleBtn.Font = Enum.Font.SourceSansBold
 ToggleBtn.Parent = ScreenGui
 
 local UICornerToggle = Instance.new("UICorner")
-UICornerToggle.CornerRadius = UDim.new(0, 12)
+UICornerToggle.CornerRadius = UDim.new(0, 10)
 UICornerToggle.Parent = ToggleBtn
 
 local UIStrokeToggle = Instance.new("UIStroke")
@@ -166,21 +107,21 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ==================== 4. MAIN FRAME ====================
+-- ==================== 3. MAIN FRAME (NỀN ĐEN + VIỀN CẦU VỒNG) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 310)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -155)
+MainFrame.Size = UDim2.new(0, 310, 0, 230)
+MainFrame.Position = UDim2.new(0.5, -155, 0.5, -115)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
 local UICornerMain = Instance.new("UICorner")
-UICornerMain.CornerRadius = UDim.new(0, 14)
+UICornerMain.CornerRadius = UDim.new(0, 12)
 UICornerMain.Parent = MainFrame
 
 local UIStrokeMain = Instance.new("UIStroke")
-UIStrokeMain.Thickness = 3
+UIStrokeMain.Thickness = 2.5
 UIStrokeMain.Parent = MainFrame
 
 local UIGradientMain = Instance.new("UIGradient")
@@ -206,28 +147,28 @@ task.spawn(function()
 end)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -60, 0, 40)
-Title.Position = UDim2.new(0, 15, 0, 5)
+Title.Size = UDim2.new(1, -50, 0, 35)
+Title.Position = UDim2.new(0, 12, 0, 3)
 Title.BackgroundTransparency = 1
 Title.Text = "eclipser hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 22
+Title.TextSize = 16
 Title.Font = Enum.Font.SourceSansBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = MainFrame
 
 local MinimizeBtn = Instance.new("TextButton")
-MinimizeBtn.Size = UDim2.new(0, 35, 0, 30)
-MinimizeBtn.Position = UDim2.new(1, -45, 0, 10)
+MinimizeBtn.Size = UDim2.new(0, 28, 0, 24)
+MinimizeBtn.Position = UDim2.new(1, -34, 0, 6)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 MinimizeBtn.Text = "━"
 MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
-MinimizeBtn.TextSize = 16
+MinimizeBtn.TextSize = 14
 MinimizeBtn.Parent = MainFrame
 
 local UICornerMin = Instance.new("UICorner")
-UICornerMin.CornerRadius = UDim.new(0, 6)
+UICornerMin.CornerRadius = UDim.new(0, 5)
 UICornerMin.Parent = MinimizeBtn
 
 local menuVisible = true
@@ -240,53 +181,49 @@ ToggleBtn.MouseButton1Click:Connect(toggleMenu)
 MinimizeBtn.MouseButton1Click:Connect(toggleMenu)
 
 local Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1, -20, 1, -55)
-Container.Position = UDim2.new(0, 10, 0, 45)
+Container.Size = UDim2.new(1, -16, 1, -45)
+Container.Position = UDim2.new(0, 8, 0, 38)
 Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 0, 270)
-Container.ScrollBarThickness = 3
+Container.CanvasSize = UDim2.new(0, 0, 0, 200)
+Container.ScrollBarThickness = 2
 Container.Parent = MainFrame
 
 local UIList = Instance.new("UIListLayout")
-UIList.Padding = UDim.new(0, 8)
+UIList.Padding = UDim.new(0, 6)
 UIList.Parent = Container
 
--- ==================== 5. NGÔN NGỮ DICTIONARY ====================
+-- ==================== 4. NGÔN NGỮ DICTIONARY ====================
 local LangData = {
-    ["EN"] = {
-        ["SavePos"] = "Save Position",
-        ["TPPos"] = "TP to Saved Position",
-        ["MoveToPos"] = "Go to Saved Position",
-        ["AutoTP"] = "Auto TP Toggle",
-        ["AutoTPSec"] = "Auto TP Delay (0-100s, 0 = Instant)",
-        ["FlySpeedInput"] = "Fly Speed (Default: 350 | Range: 100-1000)",
-        ["SavedNotif"] = "Position Saved!",
-        ["NoPosNotif"] = "No Position Saved!"
-    },
     ["VN"] = {
-        ["SavePos"] = "Lưu Vị Trí",
-        ["TPPos"] = "TP Đến Vị Trí Đã Lưu",
-        ["MoveToPos"] = "Di Chuyển Đến Vị Trí Đã Lưu",
-        ["AutoTP"] = "Tự Động TP",
-        ["AutoTPSec"] = "Thời Gian Auto TP (0-100s, 0 = Tức Thì)",
-        ["FlySpeedInput"] = "Tốc Độ Bay (Mặc Định: 350 | Từ 100-1000)",
-        ["SavedNotif"] = "Đã Lưu Vị Trí!",
-        ["NoPosNotif"] = "Chưa Lưu Vị Trí!"
+        ["SavePos"] = "Lưu Vị Trí Nhà (Base)",
+        ["DelayInput"] = "Thời gian dịch chuyển khi trộm pet (0-3s)",
+        ["CheckPet"] = "🔍 Đang kiểm tra nhặt pet...",
+        ["Detected"] = "⚠️ Phát hiện trộm pet! Đang dịch chuyển...",
+        ["Done"] = "✅ Đã lấy được pet thành công!",
+        ["Saved"] = "Đã Lưu Nhà thành công!"
+    },
+    ["EN"] = {
+        ["SavePos"] = "Save Base Position",
+        ["DelayInput"] = "Steal teleport delay (0-3s)",
+        ["CheckPet"] = "🔍 Checking for pet pickup...",
+        ["Detected"] = "⚠️ Pet stolen detected! Teleporting...",
+        ["Done"] = "✅ Pet successfully stolen!",
+        ["Saved"] = "Base Position Saved!"
     }
 }
 
 local function CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.Size = UDim2.new(1, 0, 0, 32)
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 15
+    btn.TextSize = 13
     btn.Font = Enum.Font.SourceSansBold
     btn.Parent = parent
 
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 8)
+    c.CornerRadius = UDim.new(0, 6)
     c.Parent = btn
 
     local s = Instance.new("UIStroke")
@@ -298,75 +235,20 @@ local function CreateButton(parent, text, callback)
     return btn
 end
 
-local function CreateToggle(parent, text, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 36)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
-
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextSize = 15
-    label.Font = Enum.Font.SourceSansBold
-    label.Parent = frame
-
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0, 46, 0, 22)
-    toggle.Position = UDim2.new(1, -50, 0.5, -11)
-    toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    toggle.Text = ""
-    toggle.Parent = frame
-
-    local tc = Instance.new("UICorner")
-    tc.CornerRadius = UDim.new(1, 0)
-    tc.Parent = toggle
-
-    local circle = Instance.new("Frame")
-    circle.Size = UDim2.new(0, 18, 0, 18)
-    circle.Position = UDim2.new(0, 2, 0.5, -9)
-    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    circle.Parent = toggle
-
-    local cc = Instance.new("UICorner")
-    cc.CornerRadius = UDim.new(1, 0)
-    cc.Parent = circle
-
-    local state = false
-    toggle.MouseButton1Click:Connect(function()
-        state = not state
-        if state then
-            toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            circle.Position = UDim2.new(1, -20, 0.5, -9)
-        else
-            toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            circle.Position = UDim2.new(0, 2, 0.5, -9)
-        end
-        callback(state)
-    end)
-    return frame, label
-end
-
 local function CreateInput(parent, placeholder, callback)
     local box = Instance.new("TextBox")
-    box.Size = UDim2.new(1, 0, 0, 36)
+    box.Size = UDim2.new(1, 0, 0, 32)
     box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     box.PlaceholderText = placeholder
     box.Text = ""
     box.TextColor3 = Color3.fromRGB(255, 255, 255)
     box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-    box.TextSize = 14
+    box.TextSize = 12
     box.Font = Enum.Font.SourceSansBold
     box.Parent = parent
 
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 8)
+    c.CornerRadius = UDim.new(0, 6)
     c.Parent = box
 
     local s = Instance.new("UIStroke")
@@ -380,53 +262,51 @@ local function CreateInput(parent, placeholder, callback)
     return box
 end
 
--- ==================== 6. LOGIC TELEPORT & DI CHUYỂN ====================
-local SavedCFrame = nil
-local AutoTPOn = false
-local AutoTPDelay = 0
-
+-- UI Controls
 local SaveBtn = CreateButton(Container, LangData[CurrentLang]["SavePos"], function()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
         SavedCFrame = hrp.CFrame
-        SaveBtn.Text = LangData[CurrentLang]["SavePos"] .. " (" .. LangData[CurrentLang]["SavedNotif"] .. ")"
+        SaveBtn.Text = LangData[CurrentLang]["Saved"]
         task.wait(1.5)
         SaveBtn.Text = LangData[CurrentLang]["SavePos"]
     end
 end)
 
-local TPBtn = CreateButton(Container, LangData[CurrentLang]["TPPos"], function()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp and SavedCFrame then
-        hrp.CFrame = SavedCFrame
+local DelayInput = CreateInput(Container, LangData[CurrentLang]["DelayInput"], function(t)
+    local n = tonumber(t)
+    if n then
+        DelayReturnTime = math.clamp(n, 0, 3)
     end
 end)
 
-local MoveBtn = CreateButton(Container, LangData[CurrentLang]["MoveToPos"], function()
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    local hum = char and char:FindFirstChild("Humanoid")
-    if not (hrp and hum and SavedCFrame) then return end
+-- ==================== 5. CHỨC NĂNG PHÁT HIỆN TRỘM PET THẬT TRONG GAME ====================
+local isFlyingBack = false
 
-    -- Đếm ngược 3s
-    for i = 3, 1, -1 do
-        MoveBtn.Text = LangData[CurrentLang]["MoveToPos"] .. " ( " .. i .. "s... )"
-        task.wait(1)
+local function FlyBackToBase()
+    if not SavedCFrame or isFlyingBack then return end
+    isFlyingBack = true
+
+    -- Đợi theo số giây cài đặt (0-3s)
+    if DelayReturnTime > 0 then
+        for i = DelayReturnTime, 1, -1 do
+            StatusText.Text = LangData[CurrentLang]["Detected"] .. " (" .. i .. "s)"
+            task.wait(1)
+        end
     end
 
-    if MoveMode == "Run" then
-        MoveBtn.Text = LangData[CurrentLang]["MoveToPos"] .. " ( Running... )"
-        hum:MoveTo(SavedCFrame.Position)
-        hum.MoveToFinished:Wait()
-    elseif MoveMode == "Fly" then
-        MoveBtn.Text = LangData[CurrentLang]["MoveToPos"] .. " ( Flying... )"
-        
+    StatusText.Text = LangData[CurrentLang]["Detected"]
+
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+    if hrp and SavedCFrame then
         local bv = Instance.new("BodyVelocity")
         bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.Parent = hrp
 
-        while (hrp.Position - SavedCFrame.Position).Magnitude > 5 do
+        while (hrp.Position - SavedCFrame.Position).Magnitude > 6 do
             local dir = (SavedCFrame.Position - hrp.Position).Unit
             bv.Velocity = dir * FlySpeed
             task.wait(0.02)
@@ -434,59 +314,39 @@ local MoveBtn = CreateButton(Container, LangData[CurrentLang]["MoveToPos"], func
 
         bv:Destroy()
         hrp.CFrame = SavedCFrame
+        StatusText.Text = LangData[CurrentLang]["Done"]
+        task.wait(2)
     end
 
-    MoveBtn.Text = LangData[CurrentLang]["MoveToPos"]
-end)
-
-local tAutoTP, lblAutoTP = CreateToggle(Container, LangData[CurrentLang]["AutoTP"], function(v)
-    AutoTPOn = v
-    task.spawn(function()
-        while AutoTPOn and SavedCFrame do
-            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then hrp.CFrame = SavedCFrame end
-            if AutoTPDelay > 0 then
-                task.wait(AutoTPDelay)
-            else
-                task.wait(0.01)
-            end
-        end
-    end)
-end)
-
-local AutoTPInput = CreateInput(Container, LangData[CurrentLang]["AutoTPSec"], function(t)
-    local n = tonumber(t)
-    if n then AutoTPDelay = math.clamp(n, 0, 100) end
-end)
-
-local FlySpeedInput = CreateInput(Container, LangData[CurrentLang]["FlySpeedInput"], function(t)
-    local n = tonumber(t)
-    if n then FlySpeed = math.clamp(n, 100, 1000) end
-end)
-
--- ==================== 7. CHUYỂN NGÔN NGỮ ĐĂNG KÝ CẬP NHẬT TRỰC TIẾP ====================
-local function UpdateLanguage(lang)
-    CurrentLang = lang
-    if CurrentLang == "EN" then
-        BtnEN.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        BtnEN.TextColor3 = Color3.fromRGB(0, 0, 0)
-        BtnVN.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        BtnVN.TextColor3 = Color3.fromRGB(255, 255, 255)
-    else
-        BtnVN.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        BtnVN.TextColor3 = Color3.fromRGB(0, 0, 0)
-        BtnEN.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        BtnEN.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end
-
-    -- Đổi chữ trên các UI sang đúng ngôn ngữ chọn
-    SaveBtn.Text = LangData[CurrentLang]["SavePos"]
-    TPBtn.Text = LangData[CurrentLang]["TPPos"]
-    MoveBtn.Text = LangData[CurrentLang]["MoveToPos"]
-    lblAutoTP.Text = LangData[CurrentLang]["AutoTP"]
-    AutoTPInput.PlaceholderText = LangData[CurrentLang]["AutoTPSec"]
-    FlySpeedInput.PlaceholderText = LangData[CurrentLang]["FlySpeedInput"]
+    StatusText.Text = LangData[CurrentLang]["CheckPet"]
+    isFlyingBack = false
 end
 
-BtnEN.MouseButton1Click:Connect(function() UpdateLanguage("EN") end)
-BtnVN.MouseButton1Click:Connect(function() UpdateLanguage("VN") end)
+-- Lắng nghe sự kiện cầm/nhặt pet hoặc trứng vào túi
+local function OnCharacterAdded(char)
+    char.ChildAdded:Connect(function(child)
+        -- Kiểm tra nếu vật phẩm cầm vào là Pet/Egg
+        if child:IsA("Tool") or string.find(string.lower(child.Name), "egg") or string.find(string.lower(child.Name), "pet") then
+            task.spawn(FlyBackToBase)
+        end
+    end)
+end
+
+if LocalPlayer.Character then
+    OnCharacterAdded(LocalPlayer.Character)
+end
+LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
+
+-- ==================== 6. ĐỔI NGÔN NGỮ ====================
+LangBtn.MouseButton1Click:Connect(function()
+    if CurrentLang == "VN" then
+        CurrentLang = "EN"
+        LangBtn.Text = "EN"
+    else
+        CurrentLang = "VN"
+        LangBtn.Text = "VN"
+    end
+    SaveBtn.Text = LangData[CurrentLang]["SavePos"]
+    DelayInput.PlaceholderText = LangData[CurrentLang]["DelayInput"]
+    StatusText.Text = LangData[CurrentLang]["CheckPet"]
+end)
