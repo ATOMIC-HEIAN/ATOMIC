@@ -1,9 +1,7 @@
--- [[ ECLIPSER HUB - RIDE A PET SPECIAL EDITION ]]
+-- [[ ECLIPSER HUB - REAL WORKING TELEPORT / FLY / RUN / LANG ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 if CoreGui:FindFirstChild("EclipserHubUI") then
@@ -14,95 +12,13 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
 
--- ==================== 0. INTRO SCREEN (LOADING + WELCOME) ====================
-local IntroFrame = Instance.new("Frame")
-IntroFrame.Name = "IntroFrame"
-IntroFrame.Size = UDim2.new(0, 360, 0, 190)
-IntroFrame.Position = UDim2.new(0.5, -180, 0.5, -95)
-IntroFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-IntroFrame.BorderSizePixel = 0
-IntroFrame.Parent = ScreenGui
-
-local UICornerIntro = Instance.new("UICorner")
-UICornerIntro.CornerRadius = UDim.new(0, 16)
-UICornerIntro.Parent = IntroFrame
-
-local UIStrokeIntro = Instance.new("UIStroke")
-UIStrokeIntro.Thickness = 2
-UIStrokeIntro.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeIntro.Parent = IntroFrame
-
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 50)
-TitleLabel.Position = UDim2.new(0, 0, 0, 20)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "Eclipser Hub"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 28
-TitleLabel.Font = Enum.Font.SourceSansBold
-TitleLabel.Parent = IntroFrame
-
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(1, 0, 0, 25)
-StatusLabel.Position = UDim2.new(0, 0, 0, 75)
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Text = "Loading please wait... 0%"
-StatusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-StatusLabel.TextSize = 16
-StatusLabel.Font = Enum.Font.SourceSansBold
-StatusLabel.Parent = IntroFrame
-
-local BarBackground = Instance.new("Frame")
-BarBackground.Size = UDim2.new(0.8, 0, 0, 10)
-BarBackground.Position = UDim2.new(0.1, 0, 0, 120)
-BarBackground.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-BarBackground.BorderSizePixel = 0
-BarBackground.Parent = IntroFrame
-
-local UICornerBarBg = Instance.new("UICorner")
-UICornerBarBg.CornerRadius = UDim.new(1, 0)
-UICornerBarBg.Parent = BarBackground
-
-local BarFill = Instance.new("Frame")
-BarFill.Size = UDim2.new(0, 0, 1, 0)
-BarFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-BarFill.BorderSizePixel = 0
-BarFill.Parent = BarBackground
-
-local UICornerBarFill = Instance.new("UICorner")
-UICornerBarFill.CornerRadius = UDim.new(1, 0)
-UICornerBarFill.Parent = BarFill
-
--- LUỒNG INTRO
-task.spawn(function()
-    for i = 1, 100 do
-        BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
-        StatusLabel.Text = "Loading please wait... " .. i .. "%"
-        task.wait(0.015)
-    end
-    task.wait(0.2)
-    BarBackground.Visible = false
-    TitleLabel.Text = "Welcome to"
-    TitleLabel.TextSize = 22
-    TitleLabel.Position = UDim2.new(0, 0, 0, 45)
-    TitleLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-
-    StatusLabel.Text = "Eclipser Hub"
-    StatusLabel.TextSize = 32
-    StatusLabel.Position = UDim2.new(0, 0, 0, 80)
-    StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-    task.wait(1.2)
-    IntroFrame:Destroy()
-end)
-
--- ==================== 1. DYNAMIC ISLAND (EN / VN) ====================
+-- ==================== 1. DYNAMIC ISLAND (NGÔN NGỮ EN / VN) ====================
 local CurrentLang = "EN"
 
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
-DynamicIsland.Size = UDim2.new(0, 150, 0, 40)
-DynamicIsland.Position = UDim2.new(0.5, -75, 0, 15)
+DynamicIsland.Size = UDim2.new(0, 140, 0, 38)
+DynamicIsland.Position = UDim2.new(0.5, -70, 0, 15)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DynamicIsland.Parent = ScreenGui
 
@@ -122,8 +38,9 @@ BtnEN.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 BtnEN.Text = "EN"
 BtnEN.TextColor3 = Color3.fromRGB(0, 0, 0)
 BtnEN.Font = Enum.Font.SourceSansBold
-BtnEN.TextSize = 16
+BtnEN.TextSize = 15
 BtnEN.Parent = DynamicIsland
+
 local CornerEN = Instance.new("UICorner")
 CornerEN.CornerRadius = UDim.new(1, 0)
 CornerEN.Parent = BtnEN
@@ -135,13 +52,75 @@ BtnVN.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 BtnVN.Text = "VN"
 BtnVN.TextColor3 = Color3.fromRGB(255, 255, 255)
 BtnVN.Font = Enum.Font.SourceSansBold
-BtnVN.TextSize = 16
+BtnVN.TextSize = 15
 BtnVN.Parent = DynamicIsland
+
 local CornerVN = Instance.new("UICorner")
 CornerVN.CornerRadius = UDim.new(1, 0)
 CornerVN.Parent = BtnVN
 
--- ==================== 2. TOGGLE ECLIPSER ====================
+-- ==================== 2. NÚT FLOAT CHỌN CHẾ ĐỘ (RUN / FLY) ====================
+local MoveMode = "Run"
+local FlySpeed = 350
+
+local ModeFloatBtn = Instance.new("TextButton")
+ModeFloatBtn.Name = "ModeFloatBtn"
+ModeFloatBtn.Size = UDim2.new(0, 120, 0, 38)
+ModeFloatBtn.Position = UDim2.new(1, -140, 0.5, -19)
+ModeFloatBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+ModeFloatBtn.Text = "Mode: RUN 🏃"
+ModeFloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ModeFloatBtn.Font = Enum.Font.SourceSansBold
+ModeFloatBtn.TextSize = 14
+ModeFloatBtn.Parent = ScreenGui
+
+local UICornerFloatMode = Instance.new("UICorner")
+UICornerFloatMode.CornerRadius = UDim.new(0, 10)
+UICornerFloatMode.Parent = ModeFloatBtn
+
+local UIStrokeFloatMode = Instance.new("UIStroke")
+UIStrokeFloatMode.Color = Color3.fromRGB(255, 255, 255)
+UIStrokeFloatMode.Thickness = 2
+UIStrokeFloatMode.Parent = ModeFloatBtn
+
+local dragFloat, dragInputFloat, dragStartFloat, startPosFloat
+ModeFloatBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragFloat = true
+        dragStartFloat = input.Position
+        startPosFloat = ModeFloatBtn.Position
+    end
+end)
+ModeFloatBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInputFloat = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInputFloat and dragFloat then
+        local delta = input.Position - dragStartFloat
+        ModeFloatBtn.Position = UDim2.new(startPosFloat.X.Scale, startPosFloat.X.Offset + delta.X, startPosFloat.Y.Scale, startPosFloat.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragFloat = false
+    end
+end)
+
+ModeFloatBtn.MouseButton1Click:Connect(function()
+    if MoveMode == "Run" then
+        MoveMode = "Fly"
+        ModeFloatBtn.Text = "Mode: FLY 🕊️"
+        ModeFloatBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    else
+        MoveMode = "Run"
+        ModeFloatBtn.Text = "Mode: RUN 🏃"
+        ModeFloatBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    end
+end)
+
+-- ==================== 3. TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -187,17 +166,17 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ==================== 3. MAIN FRAME (XOAY 360°) ====================
+-- ==================== 4. MAIN FRAME ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 520, 0, 310)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -155)
-MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+MainFrame.Size = UDim2.new(0, 380, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -155)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
 local UICornerMain = Instance.new("UICorner")
-UICornerMain.CornerRadius = UDim.new(0, 16)
+UICornerMain.CornerRadius = UDim.new(0, 14)
 UICornerMain.Parent = MainFrame
 
 local UIStrokeMain = Instance.new("UIStroke")
@@ -206,17 +185,19 @@ UIStrokeMain.Parent = MainFrame
 
 local UIGradientMain = Instance.new("UIGradient")
 UIGradientMain.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 0, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
+    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
 })
 UIGradientMain.Parent = UIStrokeMain
 
-local RotateEnabled = true
 task.spawn(function()
     local angle = 0
     while true do
-        if RotateEnabled and UIStrokeMain and UIStrokeMain.Parent then
+        if UIStrokeMain and UIStrokeMain.Parent then
             angle = (angle + 3) % 360
             UIGradientMain.Rotation = angle
         end
@@ -225,166 +206,101 @@ task.spawn(function()
 end)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(0, 200, 0, 40)
-Title.Position = UDim2.new(0, 160, 0, 5)
+Title.Size = UDim2.new(1, -60, 0, 40)
+Title.Position = UDim2.new(0, 15, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "ride a pet hub"
+Title.Text = "eclipser hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 22
 Title.Font = Enum.Font.SourceSansBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = MainFrame
 
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 35, 0, 30)
-MinimizeBtn.Position = UDim2.new(1, -85, 0, 10)
+MinimizeBtn.Position = UDim2.new(1, -45, 0, 10)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 MinimizeBtn.Text = "━"
 MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
 MinimizeBtn.TextSize = 16
 MinimizeBtn.Parent = MainFrame
+
 local UICornerMin = Instance.new("UICorner")
 UICornerMin.CornerRadius = UDim.new(0, 6)
 UICornerMin.Parent = MinimizeBtn
 
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 35, 0, 30)
-CloseBtn.Position = UDim2.new(1, -45, 0, 10)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Text = "✖"
-CloseBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-CloseBtn.Font = Enum.Font.SourceSansBold
-CloseBtn.TextSize = 16
-CloseBtn.Parent = MainFrame
-local UICornerClose = Instance.new("UICorner")
-UICornerClose.CornerRadius = UDim.new(0, 6)
-UICornerClose.Parent = CloseBtn
-
 local menuVisible = true
-ToggleBtn.MouseButton1Click:Connect(function()
+local function toggleMenu()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
-end)
-MinimizeBtn.MouseButton1Click:Connect(function()
-    menuVisible = not menuVisible
-    MainFrame.Visible = menuVisible
-end)
-CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
+end
 
--- ==================== 4. DICTIONARY (EN / VN) ====================
+ToggleBtn.MouseButton1Click:Connect(toggleMenu)
+MinimizeBtn.MouseButton1Click:Connect(toggleMenu)
+
+local Container = Instance.new("ScrollingFrame")
+Container.Size = UDim2.new(1, -20, 1, -55)
+Container.Position = UDim2.new(0, 10, 0, 45)
+Container.BackgroundTransparency = 1
+Container.CanvasSize = UDim2.new(0, 0, 0, 270)
+Container.ScrollBarThickness = 3
+Container.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout")
+UIList.Padding = UDim.new(0, 8)
+UIList.Parent = Container
+
+-- ==================== 5. NGÔN NGỮ DICTIONARY ====================
 local LangData = {
     ["EN"] = {
-        ["AutoSteal"] = "Auto Steal (Fly Enabled)",
-        ["StealSpeed"] = "Steal Speed (100 - 750)",
-        ["InstantSteal"] = "Instant Steal (Requires Auto Steal)",
-        ["InstantWarn"] = "* Not recommended when AFK / grinding",
-        ["RaritySelect"] = "Select Rarity (Default: All)",
-        ["PetSelect"] = "Select Pet (Default: Rarity)",
-        ["BestPet"] = "Auto Equip Best Pet",
-        ["PlaceEgg"] = "Auto Place Eggs",
-        ["EggRarity"] = "Egg Rarity (Default: All)",
-        ["EventHalloween"] = "Halloween Event 🎃 (Auto Candy & Spooky Hatch)"
+        ["SavePos"] = "Save Position",
+        ["TPPos"] = "TP to Saved Position",
+        ["MoveToPos"] = "Go to Saved Position",
+        ["AutoTP"] = "Auto TP Toggle",
+        ["AutoTPSec"] = "Auto TP Delay (0-100s, 0 = Instant)",
+        ["FlySpeedInput"] = "Fly Speed (Default: 350 | Range: 100-1000)",
+        ["SavedNotif"] = "Position Saved!",
+        ["NoPosNotif"] = "No Position Saved!"
     },
     ["VN"] = {
-        ["AutoSteal"] = "Tự Động Trộm (Đã Bật Bay)",
-        ["StealSpeed"] = "Tốc Độ Trộm (100 - 750)",
-        ["InstantSteal"] = "Trộm Nhanh Tức Thì (Cần Bật Tự Động Trộm)",
-        ["InstantWarn"] = "* Not recommended when AFK / grinding",
-        ["RaritySelect"] = "Chọn Độ Hiếm (Mặc Định: All)",
-        ["PetSelect"] = "Chọn Pet Muốn Trộm (Mặc Định: Rarity)",
-        ["BestPet"] = "Tự Động Trang Bị Pet Tốt Nhất",
-        ["PlaceEgg"] = "Tự Động Đặt Trứng",
-        ["EggRarity"] = "Độ Hiếm Trứng Đặt (Mặc Định: All)",
-        ["EventHalloween"] = "Sự Kiện Halloween 🎃 (Auto Kẹo & Mở Trứng Ma Quái)"
+        ["SavePos"] = "Lưu Vị Trí",
+        ["TPPos"] = "TP Đến Vị Trí Đã Lưu",
+        ["MoveToPos"] = "Di Chuyển Đến Vị Trí Đã Lưu",
+        ["AutoTP"] = "Tự Động TP",
+        ["AutoTPSec"] = "Thời Gian Auto TP (0-100s, 0 = Tức Thì)",
+        ["FlySpeedInput"] = "Tốc Độ Bay (Mặc Định: 350 | Từ 100-1000)",
+        ["SavedNotif"] = "Đã Lưu Vị Trí!",
+        ["NoPosNotif"] = "Chưa Lưu Vị Trí!"
     }
 }
 
--- ==================== 5. TABS & CONTAINERS ====================
-local TabHolder = Instance.new("ScrollingFrame")
-TabHolder.Size = UDim2.new(0, 120, 1, -50)
-TabHolder.Position = UDim2.new(0, 10, 0, 45)
-TabHolder.BackgroundTransparency = 1
-TabHolder.CanvasSize = UDim2.new(0, 0, 0, 100)
-TabHolder.ScrollBarThickness = 2
-TabHolder.Parent = MainFrame
-
-local UIListTab = Instance.new("UIListLayout")
-UIListTab.Padding = UDim.new(0, 6)
-UIListTab.Parent = TabHolder
-
-local tabs = {"main", "event", "visual", "setting"}
-local containers = {}
-
-for i, tabName in ipairs(tabs) do
-    local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(1, -5, 0, 38)
-    TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(25, 25, 25)
-    TabBtn.Text = tabName
-    TabBtn.TextColor3 = (i == 1) and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
-    TabBtn.TextSize = 15
-    TabBtn.Font = Enum.Font.SourceSansBold
-    TabBtn.Parent = TabHolder
-
-    local UICornerTab = Instance.new("UICorner")
-    UICornerTab.CornerRadius = UDim.new(0, 10)
-    UICornerTab.Parent = TabBtn
-
-    local Container = Instance.new("ScrollingFrame")
-    Container.Name = tabName .. "_Container"
-    Container.Size = UDim2.new(1, -150, 1, -55)
-    Container.Position = UDim2.new(0, 140, 0, 45)
-    Container.BackgroundTransparency = 1
-    Container.Visible = (i == 1)
-    Container.CanvasSize = UDim2.new(0, 0, 3, 0)
-    Container.ScrollBarThickness = 3
-    Container.Parent = MainFrame
-
-    local UIListC = Instance.new("UIListLayout")
-    UIListC.Padding = UDim.new(0, 6)
-    UIListC.Parent = Container
-
-    containers[tabName] = Container
-
-    TabBtn.MouseButton1Click:Connect(function()
-        for _, c in pairs(containers) do c.Visible = false end
-        for _, b in pairs(TabHolder:GetChildren()) do
-            if b:IsA("TextButton") then
-                b.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-                b.TextColor3 = Color3.fromRGB(255, 255, 255)
-            end
-        end
-        Container.Visible = true
-        TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    end)
-end
-
--- UI BUILDER HELPERS
 local function CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -10, 0, 34)
-    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 14
+    btn.TextSize = 15
     btn.Font = Enum.Font.SourceSansBold
     btn.Parent = parent
+
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, 8)
     c.Parent = btn
+
     local s = Instance.new("UIStroke")
     s.Color = Color3.fromRGB(255, 255, 255)
     s.Thickness = 1
     s.Parent = btn
+
     btn.MouseButton1Click:Connect(callback)
     return btn
 end
 
 local function CreateToggle(parent, text, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 34)
+    frame.Size = UDim2.new(1, 0, 0, 36)
     frame.BackgroundTransparency = 1
     frame.Parent = parent
 
@@ -392,17 +308,17 @@ local function CreateToggle(parent, text, callback)
     label.Name = "Label"
     label.Size = UDim2.new(0.7, 0, 1, 0)
     label.BackgroundTransparency = 1
-    label.Text = "  " .. text
+    label.Text = text
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextSize = 14
+    label.TextSize = 15
     label.Font = Enum.Font.SourceSansBold
     label.Parent = frame
 
     local toggle = Instance.new("TextButton")
     toggle.Size = UDim2.new(0, 46, 0, 22)
     toggle.Position = UDim2.new(1, -50, 0.5, -11)
-    toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     toggle.Text = ""
     toggle.Parent = frame
 
@@ -428,7 +344,7 @@ local function CreateToggle(parent, text, callback)
             circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
             circle.Position = UDim2.new(1, -20, 0.5, -9)
         else
-            toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
             circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             circle.Position = UDim2.new(0, 2, 0.5, -9)
         end
@@ -439,115 +355,116 @@ end
 
 local function CreateInput(parent, placeholder, callback)
     local box = Instance.new("TextBox")
-    box.Size = UDim2.new(1, -10, 0, 34)
-    box.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    box.Size = UDim2.new(1, 0, 0, 36)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     box.PlaceholderText = placeholder
     box.Text = ""
     box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.PlaceholderColor3 = Color3.fromRGB(160, 160, 160)
+    box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     box.TextSize = 14
     box.Font = Enum.Font.SourceSansBold
     box.Parent = parent
+
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, 8)
     c.Parent = box
+
     local s = Instance.new("UIStroke")
     s.Color = Color3.fromRGB(255, 255, 255)
     s.Thickness = 1
     s.Parent = box
+
     box.FocusLost:Connect(function(enter)
         if enter then callback(box.Text) end
     end)
     return box
 end
 
--- ==================== TAB 1: MAIN (RIDE A PET FEATURES) ====================
-local MainTab = containers["main"]
+-- ==================== 6. LOGIC TELEPORT & DI CHUYỂN ====================
+local SavedCFrame = nil
+local AutoTPOn = false
+local AutoTPDelay = 0
 
-local autoStealOn = false
-local stealSpeedVal = 100
-local instantStealOn = false
-local selectedRarity = "All"
-local selectedPet = "Rarity"
-local selectedEggRarity = "All"
-
-local tAutoSteal, lblAutoSteal = CreateToggle(MainTab, LangData[CurrentLang]["AutoSteal"], function(v)
-    autoStealOn = v
-end)
-
-CreateInput(MainTab, LangData[CurrentLang]["StealSpeed"] .. " (100-750)", function(t)
-    local n = tonumber(t)
-    if n then stealSpeedVal = math.clamp(n, 100, 750) end
-end)
-
-local tInstant, lblInstant = CreateToggle(MainTab, LangData[CurrentLang]["InstantSteal"], function(v)
-    if autoStealOn then
-        instantStealOn = v
-    else
-        instantStealOn = false
+local SaveBtn = CreateButton(Container, LangData[CurrentLang]["SavePos"], function()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        SavedCFrame = hrp.CFrame
+        SaveBtn.Text = LangData[CurrentLang]["SavePos"] .. " (" .. LangData[CurrentLang]["SavedNotif"] .. ")"
+        task.wait(1.5)
+        SaveBtn.Text = LangData[CurrentLang]["SavePos"]
     end
 end)
 
--- Dòng chữ nhỏ cảnh báo (bằng tiếng Anh)
-local WarnLabel = Instance.new("TextLabel")
-WarnLabel.Size = UDim2.new(1, -10, 0, 20)
-WarnLabel.BackgroundTransparency = 1
-WarnLabel.Text = "* Not recommended when AFK / grinding"
-WarnLabel.TextColor3 = Color3.fromRGB(200, 80, 80)
-WarnLabel.TextSize = 11
-WarnLabel.Font = Enum.Font.SourceSansItalic
-WarnLabel.Parent = MainTab
-
-local RarityBtn = CreateButton(MainTab, LangData[CurrentLang]["RaritySelect"] .. ": All", function()
-    local rarities = {"All", "Common", "Rare", "Epic", "Legendary", "Mythic"}
-    local idx = (table.find(rarities, selectedRarity) or 1) % #rarities + 1
-    selectedRarity = rarities[idx]
-    RarityBtn.Text = LangData[CurrentLang]["RaritySelect"] .. ": " .. selectedRarity
+local TPBtn = CreateButton(Container, LangData[CurrentLang]["TPPos"], function()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp and SavedCFrame then
+        hrp.CFrame = SavedCFrame
+    end
 end)
 
-local PetBtn = CreateButton(MainTab, LangData[CurrentLang]["PetSelect"] .. ": Rarity", function()
-    local modes = {"Rarity", "Specific Pet 1", "Specific Pet 2"}
-    local idx = (table.find(modes, selectedPet) or 1) % #modes + 1
-    selectedPet = modes[idx]
-    PetBtn.Text = LangData[CurrentLang]["PetSelect"] .. ": " .. selectedPet
+local MoveBtn = CreateButton(Container, LangData[CurrentLang]["MoveToPos"], function()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if not (hrp and hum and SavedCFrame) then return end
+
+    -- Đếm ngược 3s
+    for i = 3, 1, -1 do
+        MoveBtn.Text = LangData[CurrentLang]["MoveToPos"] .. " ( " .. i .. "s... )"
+        task.wait(1)
+    end
+
+    if MoveMode == "Run" then
+        MoveBtn.Text = LangData[CurrentLang]["MoveToPos"] .. " ( Running... )"
+        hum:MoveTo(SavedCFrame.Position)
+        hum.MoveToFinished:Wait()
+    elseif MoveMode == "Fly" then
+        MoveBtn.Text = LangData[CurrentLang]["MoveToPos"] .. " ( Flying... )"
+        
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = hrp
+
+        while (hrp.Position - SavedCFrame.Position).Magnitude > 5 do
+            local dir = (SavedCFrame.Position - hrp.Position).Unit
+            bv.Velocity = dir * FlySpeed
+            task.wait(0.02)
+        end
+
+        bv:Destroy()
+        hrp.CFrame = SavedCFrame
+    end
+
+    MoveBtn.Text = LangData[CurrentLang]["MoveToPos"]
 end)
 
-CreateButton(MainTab, LangData[CurrentLang]["BestPet"], function()
-    -- Logic auto equip best pet
+local tAutoTP, lblAutoTP = CreateToggle(Container, LangData[CurrentLang]["AutoTP"], function(v)
+    AutoTPOn = v
+    task.spawn(function()
+        while AutoTPOn and SavedCFrame do
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then hrp.CFrame = SavedCFrame end
+            if AutoTPDelay > 0 then
+                task.wait(AutoTPDelay)
+            else
+                task.wait(0.01)
+            end
+        end
+    end)
 end)
 
-CreateButton(MainTab, LangData[CurrentLang]["PlaceEgg"], function()
-    -- Logic auto place eggs
+local AutoTPInput = CreateInput(Container, LangData[CurrentLang]["AutoTPSec"], function(t)
+    local n = tonumber(t)
+    if n then AutoTPDelay = math.clamp(n, 0, 100) end
 end)
 
-local EggRarityBtn = CreateButton(MainTab, LangData[CurrentLang]["EggRarity"] .. ": All", function()
-    local rarities = {"All", "Common", "Rare", "Epic", "Legendary"}
-    local idx = (table.find(rarities, selectedEggRarity) or 1) % #rarities + 1
-    selectedEggRarity = rarities[idx]
-    EggRarityBtn.Text = LangData[CurrentLang]["EggRarity"] .. ": " .. selectedEggRarity
+local FlySpeedInput = CreateInput(Container, LangData[CurrentLang]["FlySpeedInput"], function(t)
+    local n = tonumber(t)
+    if n then FlySpeed = math.clamp(n, 100, 1000) end
 end)
 
--- ==================== TAB 2: EVENT (HALLOWEEN 🎃) ====================
-local EventTab = containers["event"]
-
-CreateToggle(EventTab, LangData[CurrentLang]["EventHalloween"], function(v)
-    -- Logic auto farm halloween event (Candy & Spooky Hatch)
-end)
-
--- ==================== TAB 3: VISUAL ====================
-local VisualTab = containers["visual"]
-CreateButton(VisualTab, "Fix Lag / Full Bright", function()
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 9e9
-end)
-
--- ==================== TAB 4: SETTING ====================
-local SettingTab = containers["setting"]
-CreateButton(SettingTab, "Reset UI Color", function()
-    MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-end)
-
--- ==================== DYNAMIC ISLAND NGÔN NGỮ ====================
+-- ==================== 7. CHUYỂN NGÔN NGỮ ĐĂNG KÝ CẬP NHẬT TRỰC TIẾP ====================
 local function UpdateLanguage(lang)
     CurrentLang = lang
     if CurrentLang == "EN" then
@@ -562,8 +479,13 @@ local function UpdateLanguage(lang)
         BtnEN.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    lblAutoSteal.Text = "  " .. LangData[CurrentLang]["AutoSteal"]
-    lblInstant.Text = "  " .. LangData[CurrentLang]["InstantSteal"]
+    -- Đổi chữ trên các UI sang đúng ngôn ngữ chọn
+    SaveBtn.Text = LangData[CurrentLang]["SavePos"]
+    TPBtn.Text = LangData[CurrentLang]["TPPos"]
+    MoveBtn.Text = LangData[CurrentLang]["MoveToPos"]
+    lblAutoTP.Text = LangData[CurrentLang]["AutoTP"]
+    AutoTPInput.PlaceholderText = LangData[CurrentLang]["AutoTPSec"]
+    FlySpeedInput.PlaceholderText = LangData[CurrentLang]["FlySpeedInput"]
 end
 
 BtnEN.MouseButton1Click:Connect(function() UpdateLanguage("EN") end)
