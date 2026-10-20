@@ -1,9 +1,12 @@
--- [[ ECLIPSER HUB - BREAK YOUR BONES REAL LOGIC EDITION ]]
+-- [[ ECLIPSER HUB - BREAK YOUR BONES (REAL-TIME METRICS & AUTO FPS BOOSTER) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
+local Lighting = game:GetService("Lighting")
 
 local plr = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -18,7 +21,25 @@ ScreenGui.Parent = CoreGui
 
 local CurrentLang = "VN"
 
--- ==================== LOGIC HỆ THỐNG (TỪ PASTEBIN) ====================
+-- ==================== AUTO FPS BOOSTER (TÍNH NĂNG ẨN TỰ KÍCH HOẠT) ====================
+task.spawn(function()
+    pcall(function()
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+                v.Enabled = false
+            elseif v:IsA("PostEffect") then
+                v.Enabled = false
+            end
+        end
+        
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end)
+end)
+
+-- ==================== LOGIC GAME THẬT (TỪ PASTEBIN GỐC) ====================
 local runningAutofarm = false
 local runningUpgrade = false
 local runningNextRagdoll = false
@@ -214,7 +235,7 @@ PercentLabel.Font = Enum.Font.SourceSansBold
 PercentLabel.TextSize = 12
 PercentLabel.Parent = LoadingFrame
 
--- ==================== 1. DYNAMIC ISLAND ====================
+-- ==================== 1. DYNAMIC ISLAND & METRICS PANEL ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
 DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
@@ -260,6 +281,64 @@ UICornerLang.Parent = LangBtn
 SetStatus = function(txt)
     StatusText.Text = "⚡ " .. txt
 end
+
+-- METRICS DISPLAY (NGAY DƯỚI DYNAMIC ISLAND - CHỮ CẦU VỒNG XOY 360°)
+local MetricsText = Instance.new("TextLabel")
+MetricsText.Name = "MetricsText"
+MetricsText.Size = UDim2.new(0, 320, 0, 20)
+MetricsText.Position = UDim2.new(0.5, -160, 0, 54)
+MetricsText.BackgroundTransparency = 1
+MetricsText.Text = "Fps: -- | Ms: -- | Ping: --"
+MetricsText.Font = Enum.Font.SourceSansBold
+MetricsText.TextSize = 13
+MetricsText.Visible = false
+MetricsText.Parent = ScreenGui
+
+local UIGradientMetrics = Instance.new("UIGradient")
+UIGradientMetrics.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
+    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
+})
+UIGradientMetrics.Parent = MetricsText
+
+-- Xoay màu chữ cầu vồng liên tục
+task.spawn(function()
+    local rot = 0
+    while true do
+        rot = (rot + 4) % 360
+        UIGradientMetrics.Rotation = rot
+        task.wait(0.02)
+    end
+end)
+
+-- Phân tích và đo lường FPS, MS, Ping thực tế từ game
+task.spawn(function()
+    local lastTime = tick()
+    local frameCount = 0
+    local fps = 60
+
+    RunService.RenderStepped:Connect(function()
+        frameCount = frameCount + 1
+        local now = tick()
+        if now - lastTime >= 1 then
+            fps = frameCount
+            frameCount = 0
+            lastTime = now
+        end
+    end)
+
+    while true do
+        local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+        local ms = math.floor((1 / math.max(fps, 1)) * 1000)
+        
+        MetricsText.Text = string.format("Fps: %d | Ms: %dms | Ping: %dms", fps, ms, ping)
+        task.wait(0.5)
+    end
+end)
 
 -- ==================== 2. TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
@@ -383,7 +462,7 @@ MinimizeBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = menuVisible
 end)
 
--- ==================== 4. SYSTEM TABS ====================
+-- ==================== 4. SYSTEM TABS & CONTROLS ====================
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -45)
 Container.Position = UDim2.new(0, 10, 0, 40)
@@ -396,7 +475,6 @@ local UIList = Instance.new("UIListLayout")
 UIList.Padding = UDim.new(0, 6)
 UIList.Parent = Container
 
--- Helper Builders
 local function CreateToggle(parent, text, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 30)
@@ -515,7 +593,7 @@ local function CreateSlider(parent, title, min, max, default, callback)
     end)
 end
 
--- ==================== 5. ĐỒNG BỘ CÁC MỤC TÍNH NĂNG THẬT ====================
+-- ==================== 5. BẬT CÁC TÍNH NĂNG GAME ====================
 CreateToggle(Container, "Autofarm Ragdoll", false, function(v)
     runningAutofarm = v
     if v then task.spawn(autofarmLoop) end
@@ -544,7 +622,6 @@ CreateToggle(Container, "Auto Refine Ragdoll", false, function(v)
     if v then task.spawn(autoRefineLoop) end
 end)
 
--- Language Change
 LangBtn.MouseButton1Click:Connect(function()
     if CurrentLang == "VN" then
         CurrentLang = "EN"
@@ -557,7 +634,7 @@ LangBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ==================== 6. KÍCH HOẠT ANIMATION INTRO (0 - 100%) ====================
+-- ==================== 6. CHẠY ANIMATION INTRO ====================
 task.spawn(function()
     for i = 0, 100 do
         PercentLabel.Text = "Loading... " .. i .. "%"
@@ -575,6 +652,7 @@ task.spawn(function()
         LoadingFrame:Destroy()
         
         DynamicIsland.Visible = true
+        MetricsText.Visible = true
         ToggleBtn.Visible = true
         MainFrame.Visible = true
     end)
