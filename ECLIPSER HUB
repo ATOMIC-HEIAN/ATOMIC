@@ -1,10 +1,12 @@
--- [[ ECLIPSER HUB - BREAK YOUR BONES (LOADING ANIMATION INTRO) ]]
+-- [[ ECLIPSER HUB - BREAK YOUR BONES REAL LOGIC EDITION ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
-local LocalPlayer = Players.LocalPlayer
+
+local plr = Players.LocalPlayer
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 if CoreGui:FindFirstChild("EclipserHubUI") then
     CoreGui.EclipserHubUI:Destroy()
@@ -16,7 +18,131 @@ ScreenGui.Parent = CoreGui
 
 local CurrentLang = "VN"
 
--- ==================== 0. ANIMATION LOADING SCREEN (INTRO) ====================
+-- ==================== LOGIC HỆ THỐNG (TỪ PASTEBIN) ====================
+local runningAutofarm = false
+local runningUpgrade = false
+local runningNextRagdoll = false
+local runningRefine = false
+local slamDuration = 20
+local slamVelocity = 100
+
+local function setFrozen(char, state)
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.Anchored = state end
+end
+
+local function safeTeleport(char, cframeAbove)
+    local parts = {}
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            parts[#parts+1] = part
+            part.Anchored = true
+            part.AssemblyLinearVelocity = Vector3.new()
+            part.AssemblyAngularVelocity = Vector3.new()
+        end
+    end
+
+    for _, part in pairs(parts) do
+        part.CFrame = cframeAbove + Vector3.new(math.random(-1,1), 0, math.random(-1,1))
+    end
+
+    task.wait(0.3)
+
+    for _, part in pairs(parts) do
+        part.Anchored = false
+    end
+end
+
+local function fireRagdollTouch()
+    local char = plr.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local ragdollPart = workspace:FindFirstChild("RagdollParts") and workspace.RagdollParts:FindFirstChild("RagdollCollission")
+    if hrp and ragdollPart then
+        local touchInterest = ragdollPart:FindFirstChildOfClass("TouchTransmitter")
+        if touchInterest then
+            firetouchinterest(hrp, ragdollPart, 0)
+            task.wait()
+            firetouchinterest(hrp, ragdollPart, 1)
+        end
+    end
+end
+
+local SetStatus -- Forward declaration
+
+local function autofarmLoop()
+    while runningAutofarm do
+        local char = plr.Character
+        if not char then
+            task.wait(1)
+        else
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local head = char:FindFirstChild("Head")
+            local spawnFolder = workspace:FindFirstChild("Spawn")
+            if hrp and head and spawnFolder then
+                local targetPart = workspace:GetChildren()[50]
+                local teleportTarget = spawnFolder:GetChildren()[84]
+                if targetPart and teleportTarget then
+                    if SetStatus then SetStatus("Autofarm: Đang va chạm Ragdoll...") end
+                    fireRagdollTouch()
+                    local startTime = tick()
+                    while tick()-startTime < slamDuration and runningAutofarm do
+                        if not (hrp and head and targetPart) then break end
+                        local direction = (targetPart.Position - hrp.Position).Unit
+                        local velocity = direction * slamVelocity
+                        for _, partName in pairs({"HumanoidRootPart","Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}) do
+                            local part = char:FindFirstChild(partName)
+                            if part then
+                                part.AssemblyLinearVelocity = velocity + Vector3.new(0,15,0)
+                            end
+                        end
+                        task.wait(0.15)
+                    end
+                    if SetStatus then SetStatus("Autofarm: Đang hồi phục & Teleport...") end
+                    setFrozen(char,true)
+                    safeTeleport(char, teleportTarget.CFrame + Vector3.new(0,10,0))
+                    setFrozen(char,false)
+
+                    local oldChar = char
+                    repeat task.wait(0.5) until not runningAutofarm or (plr.Character ~= oldChar and plr.Character:FindFirstChild("HumanoidRootPart"))
+                    if not runningAutofarm then return end
+                    task.wait(1)
+                    fireRagdollTouch()
+                else
+                    task.wait(1)
+                end
+            else
+                task.wait(1)
+            end
+        end
+    end
+end
+
+local function autoUpgradeLoop()
+    while runningUpgrade do
+        Remotes.PurchaseBoneUpgrade:FireServer("Head")
+        Remotes.PurchaseBoneUpgrade:FireServer("Torso")
+        Remotes.PurchaseBoneUpgrade:FireServer("Arm")
+        Remotes.PurchaseBoneUpgrade:FireServer("Leg")
+        task.wait(0.2)
+    end
+end
+
+local function autoNextRagdollLoop()
+    while runningNextRagdoll do
+        Remotes.PurchaseNextRagdoll:FireServer()
+        task.wait(0.5)
+    end
+end
+
+local function autoRefineLoop()
+    while runningRefine do
+        Remotes.RefineRagdoll:FireServer()
+        task.wait(0.5)
+    end
+end
+
+-- ==================== 0. INTRO LOADING SCREEN (0 - 100%) ====================
 local LoadingFrame = Instance.new("Frame")
 LoadingFrame.Name = "LoadingFrame"
 LoadingFrame.Size = UDim2.new(0, 320, 0, 180)
@@ -34,7 +160,6 @@ UIStrokeLoad.Color = Color3.fromRGB(255, 255, 255)
 UIStrokeLoad.Thickness = 2
 UIStrokeLoad.Parent = LoadingFrame
 
--- Ảnh đại diện Avatar Player
 local AvatarImg = Instance.new("ImageLabel")
 AvatarImg.Size = UDim2.new(0, 50, 0, 50)
 AvatarImg.Position = UDim2.new(0.5, -25, 0, 15)
@@ -45,24 +170,21 @@ local UICornerAvatar = Instance.new("UICorner")
 UICornerAvatar.CornerRadius = UDim.new(1, 0)
 UICornerAvatar.Parent = AvatarImg
 
--- Lấy ảnh Headshot cá nhân của Player
 task.spawn(function()
-    local content, isReady = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+    local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
     if isReady then AvatarImg.Image = content end
 end)
 
--- Tên DisplayName @Username
 local NameLabel = Instance.new("TextLabel")
 NameLabel.Size = UDim2.new(1, -20, 0, 20)
 NameLabel.Position = UDim2.new(0, 10, 0, 70)
 NameLabel.BackgroundTransparency = 1
-NameLabel.Text = LocalPlayer.DisplayName .. " (@" .. LocalPlayer.Name .. ")"
+NameLabel.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
 NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 NameLabel.Font = Enum.Font.SourceSansBold
 NameLabel.TextSize = 13
 NameLabel.Parent = LoadingFrame
 
--- Thanh tiến trình Loading Frame
 local ProgressBg = Instance.new("Frame")
 ProgressBg.Size = UDim2.new(1, -40, 0, 8)
 ProgressBg.Position = UDim2.new(0, 20, 0, 105)
@@ -82,7 +204,6 @@ local UICornerPBar = Instance.new("UICorner")
 UICornerPBar.CornerRadius = UDim.new(1, 0)
 UICornerPBar.Parent = ProgressBar
 
--- Chữ phần trăm % (0-100%)
 local PercentLabel = Instance.new("TextLabel")
 PercentLabel.Size = UDim2.new(1, 0, 0, 20)
 PercentLabel.Position = UDim2.new(0, 0, 0, 120)
@@ -93,25 +214,7 @@ PercentLabel.Font = Enum.Font.SourceSansBold
 PercentLabel.TextSize = 12
 PercentLabel.Parent = LoadingFrame
 
--- ==================== 1. QUÉT DỮ LIỆU MUTATION TRỰC TIẾP ====================
-local function GetGameMutations()
-    local list = {}
-    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
-        if v:IsA("Folder") and (string.find(string.lower(v.Name), "mutation") or string.find(string.lower(v.Name), "trait")) then
-            for _, item in pairs(v:GetChildren()) do
-                table.insert(list, item.Name)
-            end
-        end
-    end
-    if #list == 0 then
-        list = {"Common", "Rare", "Epic", "Legendary", "Mythic"}
-    end
-    return list
-end
-
-local GameMutationList = GetGameMutations()
-
--- ==================== 2. DYNAMIC ISLAND ====================
+-- ==================== 1. DYNAMIC ISLAND ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
 DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
@@ -133,7 +236,7 @@ local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, -55, 1, 0)
 StatusText.Position = UDim2.new(0, 12, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "⚡ System Loaded | Scanned " .. #GameMutationList .. " Mutations"
+StatusText.Text = "⚡ eclipser hub | Ready"
 StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
 StatusText.Font = Enum.Font.SourceSansBold
 StatusText.TextSize = 12
@@ -154,11 +257,11 @@ local UICornerLang = Instance.new("UICorner")
 UICornerLang.CornerRadius = UDim.new(1, 0)
 UICornerLang.Parent = LangBtn
 
-local function SetStatus(txt)
+SetStatus = function(txt)
     StatusText.Text = "⚡ " .. txt
 end
 
--- ==================== 3. TOGGLE ECLIPSER ====================
+-- ==================== 2. TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -205,7 +308,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ==================== 4. MAIN FRAME (RGB BORDER 360°) ====================
+-- ==================== 3. MAIN FRAME (RGB BORDER 360°) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 380, 0, 270)
@@ -249,7 +352,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 0, 35)
 Title.Position = UDim2.new(0, 12, 0, 2)
 Title.BackgroundTransparency = 1
-Title.Text = "Break Your Bones | eclipser"
+Title.Text = "Break Your Bones | eclipser hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
@@ -280,74 +383,27 @@ MinimizeBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = menuVisible
 end)
 
--- ==================== 5. SYSTEM TABS ====================
-local TabHolder = Instance.new("ScrollingFrame")
-TabHolder.Size = UDim2.new(0, 95, 1, -45)
-TabHolder.Position = UDim2.new(0, 8, 0, 38)
-TabHolder.BackgroundTransparency = 1
-TabHolder.ScrollBarThickness = 0
-TabHolder.Parent = MainFrame
+-- ==================== 4. SYSTEM TABS ====================
+local Container = Instance.new("ScrollingFrame")
+Container.Size = UDim2.new(1, -20, 1, -45)
+Container.Position = UDim2.new(0, 10, 0, 40)
+Container.BackgroundTransparency = 1
+Container.CanvasSize = UDim2.new(0, 0, 0, 350)
+Container.ScrollBarThickness = 2
+Container.Parent = MainFrame
 
-local UIListTab = Instance.new("UIListLayout")
-UIListTab.Padding = UDim.new(0, 4)
-UIListTab.Parent = TabHolder
+local UIList = Instance.new("UIListLayout")
+UIList.Padding = UDim.new(0, 6)
+UIList.Parent = Container
 
-local tabs = {"Main", "Farm", "Spin", "Mutation", "Upgrade", "Rebirth"}
-local containers = {}
-local toggleFunctions = {}
-
-for i, tabName in ipairs(tabs) do
-    local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(1, 0, 0, 30)
-    TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(20, 20, 20)
-    TabBtn.Text = tabName
-    TabBtn.TextColor3 = (i == 1) and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
-    TabBtn.Font = Enum.Font.SourceSansBold
-    TabBtn.TextSize = 13
-    TabBtn.Parent = TabHolder
-
-    local cTab = Instance.new("UICorner")
-    cTab.CornerRadius = UDim.new(0, 6)
-    cTab.Parent = TabBtn
-
-    local Container = Instance.new("ScrollingFrame")
-    Container.Size = UDim2.new(1, -118, 1, -45)
-    Container.Position = UDim2.new(0, 110, 0, 38)
-    Container.BackgroundTransparency = 1
-    Container.Visible = (i == 1)
-    Container.CanvasSize = UDim2.new(0, 0, 0, 320)
-    Container.ScrollBarThickness = 2
-    Container.Parent = MainFrame
-
-    local UIListC = Instance.new("UIListLayout")
-    UIListC.Padding = UDim.new(0, 6)
-    UIListC.Parent = Container
-
-    containers[tabName] = Container
-
-    TabBtn.MouseButton1Click:Connect(function()
-        for _, c in pairs(containers) do c.Visible = false end
-        for _, b in pairs(TabHolder:GetChildren()) do
-            if b:IsA("TextButton") then
-                b.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-                b.TextColor3 = Color3.fromRGB(255, 255, 255)
-            end
-        end
-        Container.Visible = true
-        TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    end)
-end
-
--- ==================== UI BUILDERS ====================
-local function CreateToggle(parent, text, id)
+-- Helper Builders
+local function CreateToggle(parent, text, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 30)
     frame.BackgroundTransparency = 1
     frame.Parent = parent
 
     local label = Instance.new("TextLabel")
-    label.Name = "Label"
     label.Size = UDim2.new(0.7, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Text = text
@@ -360,7 +416,7 @@ local function CreateToggle(parent, text, id)
     local toggle = Instance.new("TextButton")
     toggle.Size = UDim2.new(0, 36, 0, 18)
     toggle.Position = UDim2.new(1, -40, 0.5, -9)
-    toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    toggle.BackgroundColor3 = defaultState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(40, 40, 40)
     toggle.Text = ""
     toggle.Parent = frame
 
@@ -370,17 +426,17 @@ local function CreateToggle(parent, text, id)
 
     local circle = Instance.new("Frame")
     circle.Size = UDim2.new(0, 14, 0, 14)
-    circle.Position = UDim2.new(0, 2, 0.5, -7)
-    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.Position = defaultState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    circle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
     circle.Parent = toggle
 
     local cc = Instance.new("UICorner")
     cc.CornerRadius = UDim.new(1, 0)
     cc.Parent = circle
 
-    local state = false
-    local function setToggleState(newState)
-        state = newState
+    local state = defaultState
+    toggle.MouseButton1Click:Connect(function()
+        state = not state
         if state then
             toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -390,150 +446,127 @@ local function CreateToggle(parent, text, id)
             toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
             circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             circle.Position = UDim2.new(0, 2, 0.5, -7)
+            SetStatus("Tắt: " .. text)
         end
+        if callback then callback(state) end
+    end)
+end
+
+local function CreateSlider(parent, title, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 40)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 18)
+    label.BackgroundTransparency = 1
+    label.Text = title .. ": " .. tostring(default)
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextSize = 12
+    label.Font = Enum.Font.SourceSansBold
+    label.Parent = frame
+
+    local sliderBg = Instance.new("TextButton")
+    sliderBg.Size = UDim2.new(1, 0, 0, 10)
+    sliderBg.Position = UDim2.new(0, 0, 0, 22)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    sliderBg.Text = ""
+    sliderBg.Parent = frame
+
+    local sc = Instance.new("UICorner")
+    sc.CornerRadius = UDim.new(1, 0)
+    sc.Parent = sliderBg
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    fill.Parent = sliderBg
+
+    local fc = Instance.new("UICorner")
+    fc.CornerRadius = UDim.new(1, 0)
+    fc.Parent = fill
+
+    local sliding = false
+    local function updateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+        local val = math.floor(min + (max - min) * pos)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        label.Text = title .. ": " .. tostring(val)
+        if callback then callback(val) end
     end
 
-    toggle.MouseButton1Click:Connect(function()
-        setToggleState(not state)
-    end)
-
-    if id then toggleFunctions[id] = setToggleState end
-    return frame, label
-end
-
-local function CreateInput(parent, placeholder, callback)
-    local box = Instance.new("TextBox")
-    box.Size = UDim2.new(1, 0, 0, 28)
-    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    box.PlaceholderText = placeholder
-    box.Text = ""
-    box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-    box.TextSize = 11
-    box.Font = Enum.Font.SourceSansBold
-    box.Parent = parent
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 6)
-    c.Parent = box
-
-    local s = Instance.new("UIStroke")
-    s.Color = Color3.fromRGB(255, 255, 255)
-    s.Thickness = 1
-    s.Parent = box
-
-    box.FocusLost:Connect(function(enter)
-        if enter and callback then callback(box.Text) end
-    end)
-    return box
-end
-
-local function CreateDropdown(parent, title, options, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.Text = title .. ": " .. (options[1] or "None")
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 12
-    btn.Parent = parent
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 6)
-    c.Parent = btn
-
-    local s = Instance.new("UIStroke")
-    s.Color = Color3.fromRGB(255, 255, 255)
-    s.Thickness = 1
-    s.Parent = btn
-
-    local currentIndex = 1
-    btn.MouseButton1Click:Connect(function()
-        currentIndex = (currentIndex % #options) + 1
-        local selected = options[currentIndex]
-        btn.Text = title .. ": " .. selected
-        SetStatus("Chọn Mutation: " .. selected)
-        if callback then callback(selected) end
-    end)
-    return btn
-end
-
--- ==================== 6. POPULATE DETAILS ====================
-
--- MAIN
-local MainTab = containers["Main"]
-local KaitunBtn = Instance.new("TextButton")
-KaitunBtn.Size = UDim2.new(1, 0, 0, 36)
-KaitunBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-KaitunBtn.Text = "🚀 BẬT KAITUN (AUTO BẬT TẤT CẢ)"
-KaitunBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-KaitunBtn.Font = Enum.Font.SourceSansBold
-KaitunBtn.TextSize = 13
-KaitunBtn.Parent = MainTab
-
-local cKaitun = Instance.new("UICorner")
-cKaitun.CornerRadius = UDim.new(0, 8)
-cKaitun.Parent = KaitunBtn
-
-KaitunBtn.MouseButton1Click:Connect(function()
-    SetStatus("Kaitun Active - Auto bật các tính năng trừ Xương & Mutation!")
-    for id, func in pairs(toggleFunctions) do
-        if id ~= "upgrade_bone" and id ~= "roll_mutation" then
-            func(true)
+    sliderBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            sliding = true
+            updateSlider(input)
         end
-    end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            sliding = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            updateSlider(input)
+        end
+    end)
+end
+
+-- ==================== 5. ĐỒNG BỘ CÁC MỤC TÍNH NĂNG THẬT ====================
+CreateToggle(Container, "Autofarm Ragdoll", false, function(v)
+    runningAutofarm = v
+    if v then task.spawn(autofarmLoop) end
 end)
 
--- FARM
-CreateToggle(containers["Farm"], "Auto Ragdoll Farm", "farm_ragdoll")
-
--- SPIN
-CreateInput(containers["Spin"], "Thanh kéo / Ô nhập tốc độ Spin (1-100)", function(val)
-    SetStatus("Tốc độ Spin: " .. val)
+CreateSlider(Container, "Slam Duration", 5, 60, 20, function(val)
+    slamDuration = val
 end)
 
--- MUTATION
-CreateToggle(containers["Mutation"], "Auto Roll Mutation", "roll_mutation")
-CreateDropdown(containers["Mutation"], "Chọn Mutation", GameMutationList, function(selected)
-    SetStatus("Mục tiêu Roll: " .. selected)
+CreateSlider(Container, "Slam Velocity", 50, 500, 100, function(val)
+    slamVelocity = val
 end)
 
--- UPGRADE
-CreateToggle(containers["Upgrade"], "Auto Nâng Cấp Xương", "upgrade_bone")
-CreateToggle(containers["Upgrade"], "Auto Nâng Cấp Nhân Vật Mới", "upgrade_char")
-CreateToggle(containers["Upgrade"], "Auto Mua & Nâng Kỹ Năng", "upgrade_skill")
+CreateToggle(Container, "Auto Upgrade Bones", false, function(v)
+    runningUpgrade = v
+    if v then task.spawn(autoUpgradeLoop) end
+end)
 
--- REBIRTH
-CreateToggle(containers["Rebirth"], "Auto Rebirth (Tái Sinh Tránh Pop-up)", "auto_rebirth")
-CreateToggle(containers["Rebirth"], "Auto Tự Động Nhận Nhiệm Vụ", "auto_quest")
-CreateToggle(containers["Rebirth"], "FPS Booster (Mịn Đồ Họa & Xóa Thông Báo)", "fps_booster")
+CreateToggle(Container, "Auto Purchase Next Ragdoll", false, function(v)
+    runningNextRagdoll = v
+    if v then task.spawn(autoNextRagdollLoop) end
+end)
 
--- LANGUAGE SWITCH
+CreateToggle(Container, "Auto Refine Ragdoll", false, function(v)
+    runningRefine = v
+    if v then task.spawn(autoRefineLoop) end
+end)
+
+-- Language Change
 LangBtn.MouseButton1Click:Connect(function()
     if CurrentLang == "VN" then
         CurrentLang = "EN"
         LangBtn.Text = "EN"
-        KaitunBtn.Text = "🚀 ENABLE KAITUN (AUTO ENABLE ALL)"
-        SetStatus("Language switched to English")
+        SetStatus("Language switched to EN")
     else
         CurrentLang = "VN"
         LangBtn.Text = "VN"
-        KaitunBtn.Text = "🚀 BẬT KAITUN (AUTO BẬT TẤT CẢ)"
-        SetStatus("Đã chuyển sang Tiếng Việt")
+        SetStatus("Đã đổi sang VN")
     end
 end)
 
--- ==================== 7. CHẠY THỜI GIAN LOADING (0 - 100%) ====================
+-- ==================== 6. KÍCH HOẠT ANIMATION INTRO (0 - 100%) ====================
 task.spawn(function()
     for i = 0, 100 do
         PercentLabel.Text = "Loading... " .. i .. "%"
         ProgressBar.Size = UDim2.new(i / 100, 0, 1, 0)
-        task.wait(0.015) -- Tốc độ chạy phần trăm mượt mà
+        task.wait(0.015)
     end
 
     task.wait(0.2)
     
-    -- Hiệu ứng Fade Out từ từ màn hình Loading
     local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local fadeOut = TweenService:Create(LoadingFrame, tweenInfo, {BackgroundTransparency = 1})
     fadeOut:Play()
@@ -541,7 +574,6 @@ task.spawn(function()
     fadeOut.Completed:Connect(function()
         LoadingFrame:Destroy()
         
-        -- Hiện Dynamic Island, Toggle & Main Menu
         DynamicIsland.Visible = true
         ToggleBtn.Visible = true
         MainFrame.Visible = true
