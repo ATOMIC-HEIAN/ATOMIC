@@ -1,8 +1,9 @@
--- [[ ECLIPSER HUB - BREAK AND STEAL AN EGG (DEEP DEEP ENGINE) ]]
+-- [[ ECLIPSER HUB - BREAK YOUR BONES (LOADING ANIMATION INTRO) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
 if CoreGui:FindFirstChild("EclipserHubUI") then
@@ -13,15 +14,110 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
 
-local SavedCFrame = nil
 local CurrentLang = "VN"
 
--- ==================== 1. DYNAMIC ISLAND ====================
+-- ==================== 0. ANIMATION LOADING SCREEN (INTRO) ====================
+local LoadingFrame = Instance.new("Frame")
+LoadingFrame.Name = "LoadingFrame"
+LoadingFrame.Size = UDim2.new(0, 320, 0, 180)
+LoadingFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+LoadingFrame.BorderSizePixel = 0
+LoadingFrame.Parent = ScreenGui
+
+local UICornerLoad = Instance.new("UICorner")
+UICornerLoad.CornerRadius = UDim.new(0, 14)
+UICornerLoad.Parent = LoadingFrame
+
+local UIStrokeLoad = Instance.new("UIStroke")
+UIStrokeLoad.Color = Color3.fromRGB(255, 255, 255)
+UIStrokeLoad.Thickness = 2
+UIStrokeLoad.Parent = LoadingFrame
+
+-- Ảnh đại diện Avatar Player
+local AvatarImg = Instance.new("ImageLabel")
+AvatarImg.Size = UDim2.new(0, 50, 0, 50)
+AvatarImg.Position = UDim2.new(0.5, -25, 0, 15)
+AvatarImg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AvatarImg.Parent = LoadingFrame
+
+local UICornerAvatar = Instance.new("UICorner")
+UICornerAvatar.CornerRadius = UDim.new(1, 0)
+UICornerAvatar.Parent = AvatarImg
+
+-- Lấy ảnh Headshot cá nhân của Player
+task.spawn(function()
+    local content, isReady = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+    if isReady then AvatarImg.Image = content end
+end)
+
+-- Tên DisplayName @Username
+local NameLabel = Instance.new("TextLabel")
+NameLabel.Size = UDim2.new(1, -20, 0, 20)
+NameLabel.Position = UDim2.new(0, 10, 0, 70)
+NameLabel.BackgroundTransparency = 1
+NameLabel.Text = LocalPlayer.DisplayName .. " (@" .. LocalPlayer.Name .. ")"
+NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+NameLabel.Font = Enum.Font.SourceSansBold
+NameLabel.TextSize = 13
+NameLabel.Parent = LoadingFrame
+
+-- Thanh tiến trình Loading Frame
+local ProgressBg = Instance.new("Frame")
+ProgressBg.Size = UDim2.new(1, -40, 0, 8)
+ProgressBg.Position = UDim2.new(0, 20, 0, 105)
+ProgressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ProgressBg.Parent = LoadingFrame
+
+local UICornerPBg = Instance.new("UICorner")
+UICornerPBg.CornerRadius = UDim.new(1, 0)
+UICornerPBg.Parent = ProgressBg
+
+local ProgressBar = Instance.new("Frame")
+ProgressBar.Size = UDim2.new(0, 0, 1, 0)
+ProgressBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ProgressBar.Parent = ProgressBg
+
+local UICornerPBar = Instance.new("UICorner")
+UICornerPBar.CornerRadius = UDim.new(1, 0)
+UICornerPBar.Parent = ProgressBar
+
+-- Chữ phần trăm % (0-100%)
+local PercentLabel = Instance.new("TextLabel")
+PercentLabel.Size = UDim2.new(1, 0, 0, 20)
+PercentLabel.Position = UDim2.new(0, 0, 0, 120)
+PercentLabel.BackgroundTransparency = 1
+PercentLabel.Text = "Loading... 0%"
+PercentLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+PercentLabel.Font = Enum.Font.SourceSansBold
+PercentLabel.TextSize = 12
+PercentLabel.Parent = LoadingFrame
+
+-- ==================== 1. QUÉT DỮ LIỆU MUTATION TRỰC TIẾP ====================
+local function GetGameMutations()
+    local list = {}
+    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+        if v:IsA("Folder") and (string.find(string.lower(v.Name), "mutation") or string.find(string.lower(v.Name), "trait")) then
+            for _, item in pairs(v:GetChildren()) do
+                table.insert(list, item.Name)
+            end
+        end
+    end
+    if #list == 0 then
+        list = {"Common", "Rare", "Epic", "Legendary", "Mythic"}
+    end
+    return list
+end
+
+local GameMutationList = GetGameMutations()
+
+-- ==================== 2. DYNAMIC ISLAND ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
-DynamicIsland.Size = UDim2.new(0, 300, 0, 36)
-DynamicIsland.Position = UDim2.new(0.5, -150, 0, 12)
+DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
+DynamicIsland.Position = UDim2.new(0.5, -160, 0, 12)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+DynamicIsland.Visible = false
 DynamicIsland.Parent = ScreenGui
 
 local UICornerIsland = Instance.new("UICorner")
@@ -34,19 +130,19 @@ UIStrokeIsland.Thickness = 2
 UIStrokeIsland.Parent = DynamicIsland
 
 local StatusText = Instance.new("TextLabel")
-StatusText.Size = UDim2.new(1, -50, 1, 0)
-StatusText.Position = UDim2.new(0, 10, 0, 0)
+StatusText.Size = UDim2.new(1, -55, 1, 0)
+StatusText.Position = UDim2.new(0, 12, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "🔍 Đang quét sâu hệ thống game..."
+StatusText.Text = "⚡ System Loaded | Scanned " .. #GameMutationList .. " Mutations"
 StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
 StatusText.Font = Enum.Font.SourceSansBold
-StatusText.TextSize = 13
+StatusText.TextSize = 12
 StatusText.TextXAlignment = Enum.TextXAlignment.Left
 StatusText.Parent = DynamicIsland
 
 local LangBtn = Instance.new("TextButton")
-LangBtn.Size = UDim2.new(0, 36, 0, 22)
-LangBtn.Position = UDim2.new(1, -40, 0.5, -11)
+LangBtn.Size = UDim2.new(0, 38, 0, 22)
+LangBtn.Position = UDim2.new(1, -44, 0.5, -11)
 LangBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 LangBtn.Text = "VN"
 LangBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -58,7 +154,11 @@ local UICornerLang = Instance.new("UICorner")
 UICornerLang.CornerRadius = UDim.new(1, 0)
 UICornerLang.Parent = LangBtn
 
--- ==================== 2. TOGGLE ECLIPSER ====================
+local function SetStatus(txt)
+    StatusText.Text = "⚡ " .. txt
+end
+
+-- ==================== 3. TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -68,6 +168,7 @@ ToggleBtn.Text = "eclipser"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.TextSize = 12
 ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.Visible = false
 ToggleBtn.Parent = ScreenGui
 
 local UICornerToggle = Instance.new("UICorner")
@@ -104,13 +205,14 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ==================== 3. MAIN FRAME (CẦU VỒNG 360°) ====================
+-- ==================== 4. MAIN FRAME (RGB BORDER 360°) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 290, 0, 160)
-MainFrame.Position = UDim2.new(0.5, -145, 0.5, -80)
+MainFrame.Size = UDim2.new(0, 380, 0, 270)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -135)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 
 local UICornerMain = Instance.new("UICorner")
@@ -147,9 +249,9 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 0, 35)
 Title.Position = UDim2.new(0, 12, 0, 2)
 Title.BackgroundTransparency = 1
-Title.Text = "eclipser hub"
+Title.Text = "Break Your Bones | eclipser"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
+Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = MainFrame
@@ -169,154 +271,279 @@ UICornerMin.CornerRadius = UDim.new(0, 4)
 UICornerMin.Parent = MinimizeBtn
 
 local menuVisible = true
-local function toggleMenu()
+ToggleBtn.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
-end
-
-ToggleBtn.MouseButton1Click:Connect(toggleMenu)
-MinimizeBtn.MouseButton1Click:Connect(toggleMenu)
-
-local Container = Instance.new("Frame")
-Container.Size = UDim2.new(1, -20, 1, -45)
-Container.Position = UDim2.new(0, 10, 0, 40)
-Container.BackgroundTransparency = 1
-Container.Parent = MainFrame
-
--- Ngôn ngữ
-local LangData = {
-    ["VN"] = {
-        ["SavePos"] = "📍 Save Vị Trí Về Nhà",
-        ["Saved"] = "✅ Đã Lưu Vị Trí Thành Công!",
-        ["CheckPet"] = "🔍 Đang quét sâu hệ thống game...",
-        ["Detected"] = "⚡ ĐÃ TRỘM PET! INSTANT TP (0s)...",
-        ["Done"] = "🎉 Hoàn thành trộm & đã về nhà!"
-    },
-    ["EN"] = {
-        ["SavePos"] = "📍 Save Base Position",
-        ["Saved"] = "✅ Position Saved!",
-        ["CheckPet"] = "🔍 Scanning game core...",
-        ["Detected"] = "⚡ STOLEN PET DETECTED! TP (0s)...",
-        ["Done"] = "🎉 Stolen & Teleported home!"
-    }
-}
-
-local SaveBtn = Instance.new("TextButton")
-SaveBtn.Size = UDim2.new(1, 0, 0, 38)
-SaveBtn.Position = UDim2.new(0, 0, 0, 10)
-SaveBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-SaveBtn.Text = LangData[CurrentLang]["SavePos"]
-SaveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SaveBtn.TextSize = 14
-SaveBtn.Font = Enum.Font.SourceSansBold
-SaveBtn.Parent = Container
-
-local cSave = Instance.new("UICorner")
-cSave.CornerRadius = UDim.new(0, 8)
-cSave.Parent = SaveBtn
-
-local sSave = Instance.new("UIStroke")
-sSave.Color = Color3.fromRGB(255, 255, 255)
-sSave.Thickness = 1
-sSave.Parent = SaveBtn
-
-SaveBtn.MouseButton1Click:Connect(function()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        SavedCFrame = hrp.CFrame
-        SaveBtn.Text = LangData[CurrentLang]["Saved"]
-        task.wait(1.5)
-        SaveBtn.Text = LangData[CurrentLang]["SavePos"]
-    end
+end)
+MinimizeBtn.MouseButton1Click:Connect(function()
+    menuVisible = not menuVisible
+    MainFrame.Visible = menuVisible
 end)
 
--- ==================== 4. HÀM DỊCH CHUYỂN TỨC THÌ 0S ====================
-local lastTPTime = 0
-local function TriggerInstantTP()
-    if not SavedCFrame then return end
-    if tick() - lastTPTime < 1 then return end -- Chống spam vụn
-    lastTPTime = tick()
+-- ==================== 5. SYSTEM TABS ====================
+local TabHolder = Instance.new("ScrollingFrame")
+TabHolder.Size = UDim2.new(0, 95, 1, -45)
+TabHolder.Position = UDim2.new(0, 8, 0, 38)
+TabHolder.BackgroundTransparency = 1
+TabHolder.ScrollBarThickness = 0
+TabHolder.Parent = MainFrame
 
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+local UIListTab = Instance.new("UIListLayout")
+UIListTab.Padding = UDim.new(0, 4)
+UIListTab.Parent = TabHolder
 
-    if hrp then
-        StatusText.Text = LangData[CurrentLang]["Detected"]
-        hrp.CFrame = SavedCFrame -- Instant TP 0s
-        task.wait(0.1)
-        hrp.CFrame = SavedCFrame -- Double Check chống rollback
-        StatusText.Text = LangData[CurrentLang]["Done"]
-        task.wait(1.5)
-        StatusText.Text = LangData[CurrentLang]["CheckPet"]
-    end
-end
+local tabs = {"Main", "Farm", "Spin", "Mutation", "Upgrade", "Rebirth"}
+local containers = {}
+local toggleFunctions = {}
 
--- ==================== 5. ĐÀO SÂU QUÉT HỆ THỐNG GAME ====================
+for i, tabName in ipairs(tabs) do
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Size = UDim2.new(1, 0, 0, 30)
+    TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(20, 20, 20)
+    TabBtn.Text = tabName
+    TabBtn.TextColor3 = (i == 1) and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+    TabBtn.Font = Enum.Font.SourceSansBold
+    TabBtn.TextSize = 13
+    TabBtn.Parent = TabHolder
 
--- CÁCH 1: Bắt sự kiện RemoteEvent trong ReplicatedStorage (Chuyên dùng cho Break/Steal Egg)
-task.spawn(function()
-    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
-        if v:IsA("RemoteEvent") or v:IsA("UnreliableRemoteEvent") then
-            local name = string.lower(v.Name)
-            if string.find(name, "steal") or string.find(name, "egg") or string.find(name, "pet") or string.find(name, "grab") or string.find(name, "take") then
-                v.OnClientEvent:Connect(function(...)
-                    TriggerInstantTP()
-                end)
+    local cTab = Instance.new("UICorner")
+    cTab.CornerRadius = UDim.new(0, 6)
+    cTab.Parent = TabBtn
+
+    local Container = Instance.new("ScrollingFrame")
+    Container.Size = UDim2.new(1, -118, 1, -45)
+    Container.Position = UDim2.new(0, 110, 0, 38)
+    Container.BackgroundTransparency = 1
+    Container.Visible = (i == 1)
+    Container.CanvasSize = UDim2.new(0, 0, 0, 320)
+    Container.ScrollBarThickness = 2
+    Container.Parent = MainFrame
+
+    local UIListC = Instance.new("UIListLayout")
+    UIListC.Padding = UDim.new(0, 6)
+    UIListC.Parent = Container
+
+    containers[tabName] = Container
+
+    TabBtn.MouseButton1Click:Connect(function()
+        for _, c in pairs(containers) do c.Visible = false end
+        for _, b in pairs(TabHolder:GetChildren()) do
+            if b:IsA("TextButton") then
+                b.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+                b.TextColor3 = Color3.fromRGB(255, 255, 255)
             end
         end
+        Container.Visible = true
+        TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        TabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    end)
+end
+
+-- ==================== UI BUILDERS ====================
+local function CreateToggle(parent, text, id)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 30)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent
+
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextSize = 12
+    label.Font = Enum.Font.SourceSansBold
+    label.Parent = frame
+
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 36, 0, 18)
+    toggle.Position = UDim2.new(1, -40, 0.5, -9)
+    toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    toggle.Text = ""
+    toggle.Parent = frame
+
+    local tc = Instance.new("UICorner")
+    tc.CornerRadius = UDim.new(1, 0)
+    tc.Parent = toggle
+
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0, 14, 0, 14)
+    circle.Position = UDim2.new(0, 2, 0.5, -7)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.Parent = toggle
+
+    local cc = Instance.new("UICorner")
+    cc.CornerRadius = UDim.new(1, 0)
+    cc.Parent = circle
+
+    local state = false
+    local function setToggleState(newState)
+        state = newState
+        if state then
+            toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            circle.Position = UDim2.new(1, -16, 0.5, -7)
+            SetStatus("Bật: " .. text)
+        else
+            toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            circle.Position = UDim2.new(0, 2, 0.5, -7)
+        end
+    end
+
+    toggle.MouseButton1Click:Connect(function()
+        setToggleState(not state)
+    end)
+
+    if id then toggleFunctions[id] = setToggleState end
+    return frame, label
+end
+
+local function CreateInput(parent, placeholder, callback)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, 0, 0, 28)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    box.TextSize = 11
+    box.Font = Enum.Font.SourceSansBold
+    box.Parent = parent
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 6)
+    c.Parent = box
+
+    local s = Instance.new("UIStroke")
+    s.Color = Color3.fromRGB(255, 255, 255)
+    s.Thickness = 1
+    s.Parent = box
+
+    box.FocusLost:Connect(function(enter)
+        if enter and callback then callback(box.Text) end
+    end)
+    return box
+end
+
+local function CreateDropdown(parent, title, options, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.Text = title .. ": " .. (options[1] or "None")
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.Parent = parent
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 6)
+    c.Parent = btn
+
+    local s = Instance.new("UIStroke")
+    s.Color = Color3.fromRGB(255, 255, 255)
+    s.Thickness = 1
+    s.Parent = btn
+
+    local currentIndex = 1
+    btn.MouseButton1Click:Connect(function()
+        currentIndex = (currentIndex % #options) + 1
+        local selected = options[currentIndex]
+        btn.Text = title .. ": " .. selected
+        SetStatus("Chọn Mutation: " .. selected)
+        if callback then callback(selected) end
+    end)
+    return btn
+end
+
+-- ==================== 6. POPULATE DETAILS ====================
+
+-- MAIN
+local MainTab = containers["Main"]
+local KaitunBtn = Instance.new("TextButton")
+KaitunBtn.Size = UDim2.new(1, 0, 0, 36)
+KaitunBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+KaitunBtn.Text = "🚀 BẬT KAITUN (AUTO BẬT TẤT CẢ)"
+KaitunBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+KaitunBtn.Font = Enum.Font.SourceSansBold
+KaitunBtn.TextSize = 13
+KaitunBtn.Parent = MainTab
+
+local cKaitun = Instance.new("UICorner")
+cKaitun.CornerRadius = UDim.new(0, 8)
+cKaitun.Parent = KaitunBtn
+
+KaitunBtn.MouseButton1Click:Connect(function()
+    SetStatus("Kaitun Active - Auto bật các tính năng trừ Xương & Mutation!")
+    for id, func in pairs(toggleFunctions) do
+        if id ~= "upgrade_bone" and id ~= "roll_mutation" then
+            func(true)
+        end
     end
 end)
 
--- CÁCH 2: Quét Attribute và Value biến đổi trên Character (Dấu hiệu đang ôm/vác trứng)
-local function HookCharacter(char)
-    if not char then return end
+-- FARM
+CreateToggle(containers["Farm"], "Auto Ragdoll Farm", "farm_ragdoll")
 
-    -- Lắng nghe xem game có gắn Attribute như "Holding", "HasEgg", "Carrying" vào nhân vật không
-    char.AttributeChanged:Connect(function(attr)
-        local attrLower = string.lower(attr)
-        if string.find(attrLower, "egg") or string.find(attrLower, "hold") or string.find(attrLower, "carry") or string.find(attrLower, "pet") or string.find(attrLower, "steal") then
-            if char:GetAttribute(attr) == true or char:GetAttribute(attr) == 1 then
-                TriggerInstantTP()
-            end
-        end
-    end)
-
-    -- Lắng nghe ChildAdded (Chất trứng/vật phẩm vào người)
-    char.ChildAdded:Connect(function(child)
-        local cName = string.lower(child.Name)
-        if child:IsA("Tool") or child:IsA("Model") or string.find(cName, "egg") or string.find(cName, "pet") or string.find(cName, "carrier") then
-            TriggerInstantTP()
-        end
-    end)
-end
-
-if LocalPlayer.Character then HookCharacter(LocalPlayer.Character) end
-LocalPlayer.CharacterAdded:Connect(HookCharacter)
-
--- CÁCH 3: Quét Backpack (Túi đồ)
-local function HookBackpack(bp)
-    if not bp then return end
-    bp.ChildAdded:Connect(function(child)
-        local cName = string.lower(child.Name)
-        if string.find(cName, "egg") or string.find(cName, "pet") then
-            TriggerInstantTP()
-        end
-    end)
-end
-if LocalPlayer:FindFirstChildOfClass("Backpack") then HookBackpack(LocalPlayer:FindFirstChildOfClass("Backpack")) end
-LocalPlayer.ChildAdded:Connect(function(child)
-    if child:IsA("Backpack") then HookBackpack(child) end
+-- SPIN
+CreateInput(containers["Spin"], "Thanh kéo / Ô nhập tốc độ Spin (1-100)", function(val)
+    SetStatus("Tốc độ Spin: " .. val)
 end)
 
--- ==================== 6. CHUYỂN NGÔN NGỮ ====================
+-- MUTATION
+CreateToggle(containers["Mutation"], "Auto Roll Mutation", "roll_mutation")
+CreateDropdown(containers["Mutation"], "Chọn Mutation", GameMutationList, function(selected)
+    SetStatus("Mục tiêu Roll: " .. selected)
+end)
+
+-- UPGRADE
+CreateToggle(containers["Upgrade"], "Auto Nâng Cấp Xương", "upgrade_bone")
+CreateToggle(containers["Upgrade"], "Auto Nâng Cấp Nhân Vật Mới", "upgrade_char")
+CreateToggle(containers["Upgrade"], "Auto Mua & Nâng Kỹ Năng", "upgrade_skill")
+
+-- REBIRTH
+CreateToggle(containers["Rebirth"], "Auto Rebirth (Tái Sinh Tránh Pop-up)", "auto_rebirth")
+CreateToggle(containers["Rebirth"], "Auto Tự Động Nhận Nhiệm Vụ", "auto_quest")
+CreateToggle(containers["Rebirth"], "FPS Booster (Mịn Đồ Họa & Xóa Thông Báo)", "fps_booster")
+
+-- LANGUAGE SWITCH
 LangBtn.MouseButton1Click:Connect(function()
     if CurrentLang == "VN" then
         CurrentLang = "EN"
         LangBtn.Text = "EN"
+        KaitunBtn.Text = "🚀 ENABLE KAITUN (AUTO ENABLE ALL)"
+        SetStatus("Language switched to English")
     else
         CurrentLang = "VN"
         LangBtn.Text = "VN"
+        KaitunBtn.Text = "🚀 BẬT KAITUN (AUTO BẬT TẤT CẢ)"
+        SetStatus("Đã chuyển sang Tiếng Việt")
     end
-    SaveBtn.Text = LangData[CurrentLang]["SavePos"]
-    StatusText.Text = LangData[CurrentLang]["CheckPet"]
+end)
+
+-- ==================== 7. CHẠY THỜI GIAN LOADING (0 - 100%) ====================
+task.spawn(function()
+    for i = 0, 100 do
+        PercentLabel.Text = "Loading... " .. i .. "%"
+        ProgressBar.Size = UDim2.new(i / 100, 0, 1, 0)
+        task.wait(0.015) -- Tốc độ chạy phần trăm mượt mà
+    end
+
+    task.wait(0.2)
+    
+    -- Hiệu ứng Fade Out từ từ màn hình Loading
+    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local fadeOut = TweenService:Create(LoadingFrame, tweenInfo, {BackgroundTransparency = 1})
+    fadeOut:Play()
+    
+    fadeOut.Completed:Connect(function()
+        LoadingFrame:Destroy()
+        
+        -- Hiện Dynamic Island, Toggle & Main Menu
+        DynamicIsland.Visible = true
+        ToggleBtn.Visible = true
+        MainFrame.Visible = true
+    end)
 end)
