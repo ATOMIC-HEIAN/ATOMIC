@@ -1,4 +1,4 @@
--- [[ ECLIPSER HUB - BREAK YOUR BONES (REAL-TIME METRICS & AUTO FPS BOOSTER) ]]
+-- [[ ECLIPSER HUB - BREAK YOUR BONES (UPDATED UI & ANTI-AFK & 3D RENDER) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 local Lighting = game:GetService("Lighting")
+local VirtualUser = game:GetService("VirtualUser")
 
 local plr = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -18,10 +19,18 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
+ScreenGui.DisplayOrder = 999999 -- Đảm bảo luôn đè lên các UI khác của game
 
 local CurrentLang = "VN"
 
--- ==================== AUTO FPS BOOSTER (TÍNH NĂNG ẨN TỰ KÍCH HOẠT) ====================
+-- ==================== 0. KÍCH HOẠT ANTI-AFK (ẨN) ====================
+plr.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+end)
+
+-- ==================== AUTO FPS BOOSTER (TỰ KÍCH HOẠT ẨN) ====================
 task.spawn(function()
     pcall(function()
         Lighting.GlobalShadows = false
@@ -39,7 +48,18 @@ task.spawn(function()
     end)
 end)
 
--- ==================== LOGIC GAME THẬT (TỪ PASTEBIN GỐC) ====================
+-- ==================== DISABLE 3D RENDERING FRAME (MÀN HÌNH ĐEN 9999) ====================
+local BlackScreenFrame = Instance.new("Frame")
+BlackScreenFrame.Name = "BlackScreenFrame"
+BlackScreenFrame.Size = UDim2.new(0, 9999, 0, 9999)
+BlackScreenFrame.Position = UDim2.new(0.5, -5000, 0.5, -5000)
+BlackScreenFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BlackScreenFrame.BorderSizePixel = 0
+BlackScreenFrame.Visible = false
+BlackScreenFrame.ZIndex = 1 -- Đặt chìm dưới cùng
+BlackScreenFrame.Parent = ScreenGui
+
+-- ==================== LOGIC GAME THẬT ====================
 local runningAutofarm = false
 local runningUpgrade = false
 local runningNextRagdoll = false
@@ -89,7 +109,7 @@ local function fireRagdollTouch()
     end
 end
 
-local SetStatus -- Forward declaration
+local SetStatus
 
 local function autofarmLoop()
     while runningAutofarm do
@@ -119,7 +139,7 @@ local function autofarmLoop()
                         end
                         task.wait(0.15)
                     end
-                    if SetStatus then SetStatus("Autofarm: Đang hồi phục & Teleport...") end
+                    if SetStatus then SetStatus("Autofarm: Teleport hồi phục...") end
                     setFrozen(char,true)
                     safeTeleport(char, teleportTarget.CFrame + Vector3.new(0,10,0))
                     setFrozen(char,false)
@@ -163,13 +183,14 @@ local function autoRefineLoop()
     end
 end
 
--- ==================== 0. INTRO LOADING SCREEN (0 - 100%) ====================
+-- ==================== INTRO LOADING SCREEN (0 - 100%) ====================
 local LoadingFrame = Instance.new("Frame")
 LoadingFrame.Name = "LoadingFrame"
 LoadingFrame.Size = UDim2.new(0, 320, 0, 180)
 LoadingFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
 LoadingFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 LoadingFrame.BorderSizePixel = 0
+LoadingFrame.ZIndex = 20
 LoadingFrame.Parent = ScreenGui
 
 local UICornerLoad = Instance.new("UICorner")
@@ -185,6 +206,7 @@ local AvatarImg = Instance.new("ImageLabel")
 AvatarImg.Size = UDim2.new(0, 50, 0, 50)
 AvatarImg.Position = UDim2.new(0.5, -25, 0, 15)
 AvatarImg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AvatarImg.ZIndex = 21
 AvatarImg.Parent = LoadingFrame
 
 local UICornerAvatar = Instance.new("UICorner")
@@ -204,12 +226,14 @@ NameLabel.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
 NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 NameLabel.Font = Enum.Font.SourceSansBold
 NameLabel.TextSize = 13
+NameLabel.ZIndex = 21
 NameLabel.Parent = LoadingFrame
 
 local ProgressBg = Instance.new("Frame")
 ProgressBg.Size = UDim2.new(1, -40, 0, 8)
 ProgressBg.Position = UDim2.new(0, 20, 0, 105)
 ProgressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ProgressBg.ZIndex = 21
 ProgressBg.Parent = LoadingFrame
 
 local UICornerPBg = Instance.new("UICorner")
@@ -219,6 +243,7 @@ UICornerPBg.Parent = ProgressBg
 local ProgressBar = Instance.new("Frame")
 ProgressBar.Size = UDim2.new(0, 0, 1, 0)
 ProgressBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ProgressBar.ZIndex = 22
 ProgressBar.Parent = ProgressBg
 
 local UICornerPBar = Instance.new("UICorner")
@@ -233,15 +258,17 @@ PercentLabel.Text = "Loading... 0%"
 PercentLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 PercentLabel.Font = Enum.Font.SourceSansBold
 PercentLabel.TextSize = 12
+PercentLabel.ZIndex = 21
 PercentLabel.Parent = LoadingFrame
 
--- ==================== 1. DYNAMIC ISLAND & METRICS PANEL ====================
+-- ==================== DYNAMIC ISLAND & METRICS PANEL ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
 DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
-DynamicIsland.Position = UDim2.new(0.5, -160, 0, 12)
+DynamicIsland.Position = UDim2.new(0.5, -195, 0, 12) -- Dịch sang trái một chút để nhường chỗ cho nút eclipser
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DynamicIsland.Visible = false
+DynamicIsland.ZIndex = 10
 DynamicIsland.Parent = ScreenGui
 
 local UICornerIsland = Instance.new("UICorner")
@@ -257,11 +284,12 @@ local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, -55, 1, 0)
 StatusText.Position = UDim2.new(0, 12, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "⚡ eclipser hub | Ready"
+StatusText.Text = "⚡ eclipser hub | Anti-AFK Active"
 StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
 StatusText.Font = Enum.Font.SourceSansBold
 StatusText.TextSize = 12
 StatusText.TextXAlignment = Enum.TextXAlignment.Left
+StatusText.ZIndex = 11
 StatusText.Parent = DynamicIsland
 
 local LangBtn = Instance.new("TextButton")
@@ -272,6 +300,7 @@ LangBtn.Text = "VN"
 LangBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 LangBtn.Font = Enum.Font.SourceSansBold
 LangBtn.TextSize = 12
+LangBtn.ZIndex = 11
 LangBtn.Parent = DynamicIsland
 
 local UICornerLang = Instance.new("UICorner")
@@ -282,40 +311,53 @@ SetStatus = function(txt)
     StatusText.Text = "⚡ " .. txt
 end
 
--- METRICS DISPLAY (NGAY DƯỚI DYNAMIC ISLAND - CHỮ CẦU VỒNG XOY 360°)
+-- ==================== NÚT TOGGLE ECLIPSER (ĐẶT CẠNH DYNAMIC ISLAND - CÁCH 10PX) ====================
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "EclipserToggle"
+ToggleBtn.Size = UDim2.new(0, 60, 0, 38)
+ToggleBtn.Position = UDim2.new(0.5, 135, 0, 12) -- Cách Dynamic Island 10px
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.Text = "eclipser"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 12
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.Visible = false
+ToggleBtn.ZIndex = 10
+ToggleBtn.Parent = ScreenGui
+
+local UICornerToggle = Instance.new("UICorner")
+UICornerToggle.CornerRadius = UDim.new(1, 0)
+UICornerToggle.Parent = ToggleBtn
+
+local UIStrokeToggle = Instance.new("UIStroke")
+UIStrokeToggle.Color = Color3.fromRGB(255, 255, 255)
+UIStrokeToggle.Thickness = 2
+UIStrokeToggle.Parent = ToggleBtn
+
+-- ==================== METRICS DISPLAY (CHỮ CẦU VỒNG HSV CỰC CHUẨN) ====================
 local MetricsText = Instance.new("TextLabel")
 MetricsText.Name = "MetricsText"
 MetricsText.Size = UDim2.new(0, 320, 0, 20)
-MetricsText.Position = UDim2.new(0.5, -160, 0, 54)
+MetricsText.Position = UDim2.new(0.5, -195, 0, 54)
 MetricsText.BackgroundTransparency = 1
 MetricsText.Text = "Fps: -- | Ms: -- | Ping: --"
 MetricsText.Font = Enum.Font.SourceSansBold
 MetricsText.TextSize = 13
 MetricsText.Visible = false
+MetricsText.ZIndex = 10
 MetricsText.Parent = ScreenGui
 
-local UIGradientMetrics = Instance.new("UIGradient")
-UIGradientMetrics.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
-    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
-    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
-})
-UIGradientMetrics.Parent = MetricsText
-
--- Xoay màu chữ cầu vồng liên tục
+-- Xoay màu chữ cầu vồng trực tiếp qua HSV
 task.spawn(function()
-    local rot = 0
+    local hue = 0
     while true do
-        rot = (rot + 4) % 360
-        UIGradientMetrics.Rotation = rot
-        task.wait(0.02)
+        hue = (hue + 0.01) % 1
+        MetricsText.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        task.wait(0.03)
     end
 end)
 
--- Phân tích và đo lường FPS, MS, Ping thực tế từ game
+-- Đo đạc thông số thực
 task.spawn(function()
     local lastTime = tick()
     local frameCount = 0
@@ -340,61 +382,15 @@ task.spawn(function()
     end
 end)
 
--- ==================== 2. TOGGLE ECLIPSER ====================
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "EclipserToggle"
-ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0, 15, 1, -65)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ToggleBtn.Text = "eclipser"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 12
-ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.Visible = false
-ToggleBtn.Parent = ScreenGui
-
-local UICornerToggle = Instance.new("UICorner")
-UICornerToggle.CornerRadius = UDim.new(0, 10)
-UICornerToggle.Parent = ToggleBtn
-
-local UIStrokeToggle = Instance.new("UIStroke")
-UIStrokeToggle.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeToggle.Thickness = 2
-UIStrokeToggle.Parent = ToggleBtn
-
-local dragging, dragInput, dragStart, startPos
-ToggleBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = ToggleBtn.Position
-    end
-end)
-ToggleBtn.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
-
--- ==================== 3. MAIN FRAME (RGB BORDER 360°) ====================
+-- ==================== MAIN FRAME (RGB BORDER 360°) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 270)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -135)
+MainFrame.Size = UDim2.new(0, 380, 0, 290)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -145)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
+MainFrame.ZIndex = 10
 MainFrame.Parent = ScreenGui
 
 local UICornerMain = Instance.new("UICorner")
@@ -436,6 +432,7 @@ Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 11
 Title.Parent = MainFrame
 
 local MinimizeBtn = Instance.new("TextButton")
@@ -446,6 +443,7 @@ MinimizeBtn.Text = "━"
 MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
 MinimizeBtn.TextSize = 12
+MinimizeBtn.ZIndex = 11
 MinimizeBtn.Parent = MainFrame
 
 local UICornerMin = Instance.new("UICorner")
@@ -462,13 +460,14 @@ MinimizeBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = menuVisible
 end)
 
--- ==================== 4. SYSTEM TABS & CONTROLS ====================
+-- ==================== SYSTEM CONTROLS ====================
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -45)
 Container.Position = UDim2.new(0, 10, 0, 40)
 Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 0, 350)
+Container.CanvasSize = UDim2.new(0, 0, 0, 380)
 Container.ScrollBarThickness = 2
+Container.ZIndex = 11
 Container.Parent = MainFrame
 
 local UIList = Instance.new("UIListLayout")
@@ -479,6 +478,7 @@ local function CreateToggle(parent, text, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 30)
     frame.BackgroundTransparency = 1
+    frame.ZIndex = 11
     frame.Parent = parent
 
     local label = Instance.new("TextLabel")
@@ -489,6 +489,7 @@ local function CreateToggle(parent, text, defaultState, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextSize = 12
     label.Font = Enum.Font.SourceSansBold
+    label.ZIndex = 12
     label.Parent = frame
 
     local toggle = Instance.new("TextButton")
@@ -496,6 +497,7 @@ local function CreateToggle(parent, text, defaultState, callback)
     toggle.Position = UDim2.new(1, -40, 0.5, -9)
     toggle.BackgroundColor3 = defaultState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(40, 40, 40)
     toggle.Text = ""
+    toggle.ZIndex = 12
     toggle.Parent = frame
 
     local tc = Instance.new("UICorner")
@@ -506,6 +508,7 @@ local function CreateToggle(parent, text, defaultState, callback)
     circle.Size = UDim2.new(0, 14, 0, 14)
     circle.Position = defaultState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
     circle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+    circle.ZIndex = 13
     circle.Parent = toggle
 
     local cc = Instance.new("UICorner")
@@ -534,6 +537,7 @@ local function CreateSlider(parent, title, min, max, default, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 40)
     frame.BackgroundTransparency = 1
+    frame.ZIndex = 11
     frame.Parent = parent
 
     local label = Instance.new("TextLabel")
@@ -544,6 +548,7 @@ local function CreateSlider(parent, title, min, max, default, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextSize = 12
     label.Font = Enum.Font.SourceSansBold
+    label.ZIndex = 12
     label.Parent = frame
 
     local sliderBg = Instance.new("TextButton")
@@ -551,6 +556,7 @@ local function CreateSlider(parent, title, min, max, default, callback)
     sliderBg.Position = UDim2.new(0, 0, 0, 22)
     sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     sliderBg.Text = ""
+    sliderBg.ZIndex = 12
     sliderBg.Parent = frame
 
     local sc = Instance.new("UICorner")
@@ -560,6 +566,7 @@ local function CreateSlider(parent, title, min, max, default, callback)
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
     fill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    fill.ZIndex = 13
     fill.Parent = sliderBg
 
     local fc = Instance.new("UICorner")
@@ -593,7 +600,12 @@ local function CreateSlider(parent, title, min, max, default, callback)
     end)
 end
 
--- ==================== 5. BẬT CÁC TÍNH NĂNG GAME ====================
+-- ==================== ĐỒNG BỘ CÁC MỤC TÍNH NĂNG ====================
+CreateToggle(Container, "Disable 3D Rendering (Màn Đen Treo Game)", false, function(v)
+    BlackScreenFrame.Visible = v
+    RunService:Set3dRenderingEnabled(not v)
+end)
+
 CreateToggle(Container, "Autofarm Ragdoll", false, function(v)
     runningAutofarm = v
     if v then task.spawn(autofarmLoop) end
@@ -634,7 +646,7 @@ LangBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ==================== 6. CHẠY ANIMATION INTRO ====================
+-- ==================== CHẠY ANIMATION INTRO ====================
 task.spawn(function()
     for i = 0, 100 do
         PercentLabel.Text = "Loading... " .. i .. "%"
