@@ -1,0 +1,470 @@
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local SecretHub = loadstring(game:HttpGet("https://pastebin.com/raw/Mfi9Nc27"))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local FarmTab = SecretHub:Tab("Auto Farm", "⚙️")
+local FarmSec = FarmTab:Section("Control/Управление")
+
+local KillTab = SecretHub:Tab("Auto Kill", "🔪")
+local KillSec = KillTab:Section("Control/Управление")
+
+local SpeedTab = SecretHub:Tab("SpeedHack", "⚡")
+local SpeedSec = SpeedTab:Section("Control/Управление")
+
+local farmEnabled = false
+local killEnabled = false
+local farmConnection = nil
+local killConnection = nil
+local lastFarmFire = 0
+local lastAttack = 0
+local currentTarget = nil
+local targetStartTime = 0
+local SPECIFIC_TARGET = nil
+local TARGET_NAME_PART = ""
+local KILL_ALL = false
+local FARM_POSITION = Vector3.new(1.0, 83.3, -5.1)
+local ACTIVATE_DELAY = 0.08
+local ATTACK_RANGE = 15
+local TARGET_SWITCH_TIME = 5
+local ATTACK_COOLDOWN = 0.3
+local respawnConnection = nil
+local speedEnabled = false
+local walkSpeed = 16
+local jumpPower = 50
+
+local function stopFarmLoop()
+    if farmConnection then
+        farmConnection:Disconnect()
+        farmConnection = nil
+    end
+end
+
+local function stopKillLoop()
+    if killConnection then
+        killConnection:Disconnect()
+        killConnection = nil
+    end
+    currentTarget = nil
+end
+
+local function equipBestWeight()
+    local char = LocalPlayer.Character
+    if not char then return false end
+    local allTools = {}
+    for _, item in pairs(char:GetChildren()) do
+        if item:IsA("Tool") then table.insert(allTools, item) end
+    end
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if backpack then
+        for _, item in pairs(backpack:GetChildren()) do
+            if item:IsA("Tool") then table.insert(allTools, item) end
+        end
+    end
+    for _, tool in pairs(allTools) do
+        if tool.Name:find("Weight") and tool.Name ~= "Weight" then
+            if tool.Parent ~= char then
+                tool.Parent = char
+                task.wait(0.15)
+            end
+            return true
+        end
+    end
+    for _, tool in pairs(allTools) do
+        if tool.Name == "Weight" then
+            if tool.Parent ~= char then
+                tool.Parent = char
+                task.wait(0.15)
+            end
+            return true
+        end
+    end
+    return false
+end
+
+local function equipCombat()
+    local char = LocalPlayer.Character
+    if not char then return false end
+    
+    for _, item in pairs(char:GetChildren()) do
+        if item:IsA("Tool") and item.Name == "Combat" then
+            return true
+        end
+    end
+    
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if backpack then
+        local combatTool = backpack:FindFirstChild("Combat")
+        if combatTool and combatTool:IsA("Tool") then
+            combatTool.Parent = char
+            task.wait(0.15)
+            return true
+        end
+    end
+    
+    return false
+end
+
+local function ensureCombatEquipped()
+    local char = LocalPlayer.Character
+    if not char then return false end
+    
+    for _, item in pairs(char:GetChildren()) do
+        if item:IsA("Tool") and item.Name == "Combat" then
+            return true
+        end
+    end
+    
+    return equipCombat()
+end
+
+local function teleportToFarmPosition()
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    pcall(function()
+        char.HumanoidRootPart.CFrame = CFrame.new(FARM_POSITION)
+    end)
+end
+
+local function isDifferentTeam(player)
+    if not LocalPlayer.Team or not player.Team then return true end
+    return LocalPlayer.Team ~= player.Team
+end
+
+local function isAlive(player)
+    if not player or not player.Character then return false end
+    local h = player.Character:FindFirstChildOfClass("Humanoid")
+    return h and h.Health > 0
+end
+
+local function findPlayerByNamePart(namePart)
+    namePart = namePart:lower()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Name:lower():find(namePart) then
+            return p
+        end
+    end
+    return nil
+end
+
+local function getTarget()
+    if KILL_ALL then
+        local char = LocalPlayer.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+        local myPos = char.HumanoidRootPart.Position
+        local nearest, nearestDist = nil, ATTACK_RANGE + 1
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and isAlive(p) then
+                local root = p.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local dist = (myPos - root.Position).Magnitude
+                    if dist < nearestDist then
+                        nearestDist = dist
+                        nearest = p
+                    end
+                end
+            end
+        end
+        return nearest
+    end
+    
+    if SPECIFIC_TARGET and isAlive(SPECIFIC_TARGET) then return SPECIFIC_TARGET end
+    
+    if TARGET_NAME_PART ~= "" then
+        local found = findPlayerByNamePart(TARGET_NAME_PART)
+        if found and isAlive(found) then
+            SPECIFIC_TARGET = found
+            return found
+        end
+    end
+    
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+    local myPos = char.HumanoidRootPart.Position
+    local nearest, nearestDist = nil, ATTACK_RANGE + 1
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and isDifferentTeam(p) and isAlive(p) then
+            local root = p.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local dist = (myPos - root.Position).Magnitude
+                if dist < nearestDist then
+                    nearestDist = dist
+                    nearest = p
+                end
+            end
+        end
+    end
+    return nearest
+end
+
+local function punchTarget(targetPlayer)
+    if not targetPlayer or not targetPlayer.Character then return end
+    
+    ensureCombatEquipped()
+    
+    local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+    local leftLowerLeg = targetPlayer.Character:FindFirstChild("LeftLowerLeg")
+    local head = targetPlayer.Character:FindFirstChild("Head")
+    local combat = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Combat")
+    
+    if humanoid and leftLowerLeg and head and combat then
+        local args = {humanoid, leftLowerLeg, head, combat}
+        pcall(function()
+            ReplicatedStorage:WaitForChild("punched"):FireServer(unpack(args))
+        end)
+    end
+end
+
+local function applySpeed()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = walkSpeed
+        humanoid.JumpPower = jumpPower
+    end
+end
+
+FarmSec:Toggle({
+    Label = "Auto Farm",
+    Default = false,
+    Callback = function(value)
+        farmEnabled = value
+        if value then
+            teleportToFarmPosition()
+            equipBestWeight()
+            pcall(function() ReplicatedStorage:WaitForChild("addStrength"):FireServer() end)
+            if not farmConnection then
+                farmConnection = RunService.Heartbeat:Connect(function()
+                    if not farmEnabled then return end
+                    if tick() - lastFarmFire >= ACTIVATE_DELAY then
+                        pcall(function() ReplicatedStorage:WaitForChild("addStrength"):FireServer() end)
+                        lastFarmFire = tick()
+                    end
+                    local pos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if pos then
+                        local dx = pos.Position.X - FARM_POSITION.X
+                        local dz = pos.Position.Z - FARM_POSITION.Z
+                        if math.sqrt(dx*dx + dz*dz) > 2 then
+                            teleportToFarmPosition()
+                        end
+                    end
+                    local char = LocalPlayer.Character
+                    if char then
+                        local found = false
+                        for _, item in pairs(char:GetChildren()) do
+                            if item:IsA("Tool") and item.Name:find("Weight") then
+                                found = true
+                                break
+                            end
+                        end
+                        if not found then equipBestWeight() end
+                    end
+                end)
+            end
+        else
+            stopFarmLoop()
+        end
+    end
+})
+
+FarmSec:Button({
+    Label = "Teleport to position/Телепорт",
+    Callback = function() teleportToFarmPosition() end
+})
+
+FarmSec:Button({
+    Label = "Equip Weight/Экипировать Weight",
+    Callback = function() equipBestWeight() end
+})
+
+FarmSec:Input({
+    Label = "Delay (sec)/Задержка (сек)",
+    Placeholder = "0.08",
+    Default = "0.08",
+    Callback = function(text)
+        local n = tonumber(text)
+        if n and n > 0 then ACTIVATE_DELAY = n end
+    end
+})
+
+KillSec:Toggle({
+    Label = "Kill All/Убить всех",
+    Default = false,
+    Callback = function(value)
+        KILL_ALL = value
+        if value then
+            SecretHub.Notify("Kill All/Убить всех", "Targeting everyone/Цель: все", "info")
+        end
+    end
+})
+
+KillSec:Toggle({
+    Label = "Auto Kill",
+    Default = false,
+    Callback = function(value)
+        killEnabled = value
+        if value then
+            equipCombat()
+            if not killConnection then
+                killConnection = RunService.Heartbeat:Connect(function()
+                    if not killEnabled then return end
+                    if tick() - lastAttack < ATTACK_COOLDOWN then return end
+                    if not currentTarget or not isAlive(currentTarget) then
+                        currentTarget = getTarget()
+                        targetStartTime = tick()
+                        if currentTarget then
+                            SecretHub.Notify("Auto Kill", "Target/Цель: " .. currentTarget.Name, "success")
+                        end
+                        return
+                    end
+                    if tick() - targetStartTime >= TARGET_SWITCH_TIME then
+                        currentTarget = getTarget()
+                        targetStartTime = tick()
+                        if currentTarget then
+                            SecretHub.Notify("Auto Kill", "New target/Новая цель: " .. currentTarget.Name, "info")
+                        end
+                        return
+                    end
+                    punchTarget(currentTarget)
+                    lastAttack = tick()
+                end)
+            end
+        else
+            stopKillLoop()
+        end
+    end
+})
+
+KillSec:Button({
+    Label = "Equip Combat/Экипировать Combat",
+    Callback = function()
+        if equipCombat() then
+            SecretHub.Notify("Auto Kill", "Combat equipped/экипирован", "success")
+        else
+            SecretHub.Notify("Auto Kill", "Combat not found/не найден", "error")
+        end
+    end
+})
+
+KillSec:Input({
+    Label = "Target name/Цель (часть ника)",
+    Placeholder = "John",
+    Default = "",
+    Callback = function(text)
+        if text ~= "" then
+            TARGET_NAME_PART = text
+            SPECIFIC_TARGET = findPlayerByNamePart(text)
+            if SPECIFIC_TARGET then
+                SecretHub.Notify("Auto Kill", "Target found/Найден: " .. SPECIFIC_TARGET.Name, "success")
+                KILL_ALL = false
+            else
+                SecretHub.Notify("Auto Kill", "Player not found/Не найден: " .. text, "warn")
+            end
+        else
+            TARGET_NAME_PART = ""
+            SPECIFIC_TARGET = nil
+            SecretHub.Notify("Auto Kill", "Mode: nearest enemy/Режим: ближайший враг", "info")
+        end
+    end
+})
+
+KillSec:Input({
+    Label = "Range/Дальность",
+    Placeholder = "15",
+    Default = "15",
+    Callback = function(text)
+        local n = tonumber(text)
+        if n and n > 0 then ATTACK_RANGE = n end
+    end
+})
+
+KillSec:Input({
+    Label = "Switch time (sec)/Переключение (сек)",
+    Placeholder = "5",
+    Default = "5",
+    Callback = function(text)
+        local n = tonumber(text)
+        if n and n > 0 then TARGET_SWITCH_TIME = n end
+    end
+})
+
+KillSec:Input({
+    Label = "Attack CD (sec)/КД атаки (сек)",
+    Placeholder = "0.3",
+    Default = "0.3",
+    Callback = function(text)
+        local n = tonumber(text)
+        if n and n > 0 then ATTACK_COOLDOWN = n end
+    end
+})
+
+SpeedSec:Toggle({
+    Label = "SpeedHack",
+    Default = false,
+    Callback = function(value)
+        speedEnabled = value
+        if value then
+            applySpeed()
+        else
+            local char = LocalPlayer.Character
+            if char then
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = 16
+                    humanoid.JumpPower = 50
+                end
+            end
+        end
+    end
+})
+
+SpeedSec:Slider({
+    Label = "WalkSpeed/Скорость",
+    Min = 16,
+    Max = 200,
+    Default = 16,
+    Callback = function(value)
+        walkSpeed = value
+        if speedEnabled then
+            applySpeed()
+        end
+    end
+})
+
+SpeedSec:Slider({
+    Label = "JumpPower/Прыжок",
+    Min = 50,
+    Max = 300,
+    Default = 50,
+    Callback = function(value)
+        jumpPower = value
+        if speedEnabled then
+            applySpeed()
+        end
+    end
+})
+
+respawnConnection = LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(0.3)
+    if speedEnabled then
+        applySpeed()
+    end
+    task.wait(0.2)
+    if farmEnabled then
+        teleportToFarmPosition()
+        repeat task.wait(0.2)
+        until LocalPlayer:FindFirstChild("Backpack") and LocalPlayer.Backpack:FindFirstChild("Double Weight")
+        equipBestWeight()
+    end
+    if killEnabled then
+        task.wait(0.3)
+        equipCombat()
+    end
+end)
