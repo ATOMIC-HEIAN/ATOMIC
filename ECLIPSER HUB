@@ -1,4 +1,4 @@
--- [[ ECLIPSER HUB - EVADE EDITION (WITH INTRO LOADING SCREEN) ]]
+-- [[ ECLIPSER HUB - UNIVERSAL MASTER ULTIMATE EDITION ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -8,22 +8,50 @@ local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
+local TeleportService = game:GetService("TeleportService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local plr = Players.LocalPlayer
 
-if CoreGui:FindFirstChild("EclipserEvadeUI") then
-    CoreGui.EclipserEvadeUI:Destroy()
+if CoreGui:FindFirstChild("EclipserUniversalUI") then
+    CoreGui.EclipserUniversalUI:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "EclipserEvadeUI"
+ScreenGui.Name = "EclipserUniversalUI"
 ScreenGui.Parent = CoreGui
 ScreenGui.DisplayOrder = 999999
 
 local CurrentLang = "VN"
+local scriptStartTime = tick()
 
--- ==================== 0. ANTI-AFK SYSTEM ====================
+-- ==================== CÁC BIẾN TRẠNG THÁI (GLOBAL STATES) ====================
 local runningAntiAFK = true
+local runningAntiRagdoll = false
+local runningAntiBlock = false
+local runningAntiKick = false
+local runningAutoRejoin = false
+local runningNoclip = false
+local runningInfJump = false
+local runningFly = false
+local runningGodmode = false
+local runningClickTP = false
+local runningESPBox = false
+local runningESPName = false
+local runningESPGlass = false
+local runningHitbox = false
+local runningReach = false
+local runningSuperFPS = false
+local runningFullbright = false
+
+local walkSpeedVal = 16
+local jumpPowerVal = 50
+local flySpeed = 50
+local hitboxSize = 10
+local reachSize = 5
+local flyConnection = nil
+
+-- ==================== 0. ANTI-AFK & ANTI-KICK & AUTO REJOIN ====================
 plr.Idled:Connect(function()
     if runningAntiAFK then
         VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
@@ -32,19 +60,43 @@ plr.Idled:Connect(function()
     end
 end)
 
--- ==================== AUTO FPS BOOSTER (AN) ====================
-task.spawn(function()
+pcall(function()
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if runningAntiKick and (method == "Kick" or method == "kick") then
+            return
+        end
+        return old(self, ...)
+    end)
+    setreadonly(mt, true)
+end)
+
+CoreGui.ChildAdded:Connect(function(child)
+    if runningAutoRejoin and (child.Name == "ErrorPrompt" or child.Name == "DisconnectPrompt") then
+        task.wait(2)
+        TeleportService:Teleport(game.PlaceId, plr)
+    end
+end)
+
+-- ==================== SUPER FPS BOOSTER ====================
+local function applySuperFPS(state)
+    runningSuperFPS = state
     pcall(function()
-        Lighting.GlobalShadows = false
-        Lighting.FogEnd = 9e9
+        Lighting.GlobalShadows = not state
+        Lighting.FogEnd = state and 9e9 or 100000
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("PostEffect") then
-                v.Enabled = false
+                v.Enabled = not state
             end
         end
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        if state then
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        end
     end)
-end)
+end
 
 -- ==================== INTRO LOADING SCREEN (0 - 100%) ====================
 local LoadingFrame = Instance.new("Frame")
@@ -64,6 +116,7 @@ local AvatarImg = Instance.new("ImageLabel")
 AvatarImg.Size = UDim2.new(0, 50, 0, 50)
 AvatarImg.Position = UDim2.new(0.5, -25, 0, 15)
 AvatarImg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AvatarImg.BorderSizePixel = 0
 AvatarImg.ZIndex = 21
 AvatarImg.Parent = LoadingFrame
 
@@ -74,9 +127,7 @@ UICornerAvatar.Parent = AvatarImg
 task.spawn(function()
     pcall(function()
         local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-        if isReady and AvatarImg then 
-            AvatarImg.Image = content 
-        end
+        if isReady and AvatarImg then AvatarImg.Image = content end
     end)
 end)
 
@@ -95,6 +146,7 @@ local ProgressBg = Instance.new("Frame")
 ProgressBg.Size = UDim2.new(1, -40, 0, 8)
 ProgressBg.Position = UDim2.new(0, 20, 0, 105)
 ProgressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ProgressBg.BorderSizePixel = 0
 ProgressBg.ZIndex = 21
 ProgressBg.Parent = LoadingFrame
 
@@ -105,6 +157,7 @@ UICornerPBg.Parent = ProgressBg
 local ProgressBar = Instance.new("Frame")
 ProgressBar.Size = UDim2.new(0, 0, 1, 0)
 ProgressBar.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+ProgressBar.BorderSizePixel = 0
 ProgressBar.ZIndex = 22
 ProgressBar.Parent = ProgressBg
 
@@ -116,14 +169,14 @@ local PercentLabel = Instance.new("TextLabel")
 PercentLabel.Size = UDim2.new(1, 0, 0, 20)
 PercentLabel.Position = UDim2.new(0, 0, 0, 120)
 PercentLabel.BackgroundTransparency = 1
-PercentLabel.Text = "Loading... 0%"
+PercentLabel.Text = "Universal Hub Loading... 0%"
 PercentLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 PercentLabel.Font = Enum.Font.SourceSansBold
 PercentLabel.TextSize = 12
 PercentLabel.ZIndex = 21
 PercentLabel.Parent = LoadingFrame
 
--- ==================== DISABLE 3D RENDERING FRAME ====================
+-- ==================== DISABLE 3D RENDERING FRAME (MÀN ĐEN 9999PX) ====================
 local BlackScreenFrame = Instance.new("Frame")
 BlackScreenFrame.Name = "BlackScreenFrame"
 BlackScreenFrame.Size = UDim2.new(0, 9999, 0, 9999)
@@ -134,18 +187,18 @@ BlackScreenFrame.Visible = false
 BlackScreenFrame.ZIndex = 1
 BlackScreenFrame.Parent = ScreenGui
 
--- ==================== BANG TOKENS & LEVEL REAL-TIME EVADE ====================
+-- ==================== BẢNG STATS REAL-TIME TRÍCH XUẤT DATA ====================
 local StatsDisplay = Instance.new("TextLabel")
 StatsDisplay.Name = "StatsDisplay"
-StatsDisplay.Size = UDim2.new(0, 320, 0, 45)
-StatsDisplay.Position = UDim2.new(0.5, -160, 0, 80)
+StatsDisplay.Size = UDim2.new(0, 340, 0, 45)
+StatsDisplay.Position = UDim2.new(0.5, -170, 0, 80)
 StatsDisplay.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 StatsDisplay.BackgroundTransparency = 0.1
 StatsDisplay.BorderSizePixel = 0
-StatsDisplay.Text = "💵 Tokens: Dang quet... | ⭐ Level: Dang quet..."
+StatsDisplay.Text = "💵 Money/Tokens: Dang quet... | ⭐ Level: Dang quet..."
 StatsDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
 StatsDisplay.Font = Enum.Font.SourceSansBold
-StatsDisplay.TextSize = 15
+StatsDisplay.TextSize = 14
 StatsDisplay.Visible = false
 StatsDisplay.ZIndex = 2
 StatsDisplay.Parent = ScreenGui
@@ -154,87 +207,37 @@ local UICornerStats = Instance.new("UICorner")
 UICornerStats.CornerRadius = UDim.new(0, 8)
 UICornerStats.Parent = StatsDisplay
 
-local function GetEvadeRealData()
-    local realTokens = nil
-    local realLevel = nil
-
-    if plr:GetAttribute("Tokens") then realTokens = plr:GetAttribute("Tokens") end
-    if plr:GetAttribute("Token") then realTokens = plr:GetAttribute("Token") end
+local function GetUniversalRealData()
+    local realMoney, realLevel = nil, nil
+    if plr:GetAttribute("Tokens") then realMoney = plr:GetAttribute("Tokens") end
+    if plr:GetAttribute("Money") then realMoney = plr:GetAttribute("Money") end
     if plr:GetAttribute("Level") then realLevel = plr:GetAttribute("Level") end
 
     local dataFolder = plr:FindFirstChild("PlayerData") or plr:FindFirstChild("Data") or plr:FindFirstChild("stats")
     if dataFolder then
-        local tVal = dataFolder:FindFirstChild("Tokens") or dataFolder:FindFirstChild("Token") or dataFolder:FindFirstChild("Point")
+        local mVal = dataFolder:FindFirstChild("Tokens") or dataFolder:FindFirstChild("Money") or dataFolder:FindFirstChild("Cash") or dataFolder:FindFirstChild("Coins")
         local lVal = dataFolder:FindFirstChild("Level") or dataFolder:FindFirstChild("LVL")
-        if tVal then realTokens = tVal.Value end
+        if mVal then realMoney = mVal.Value end
         if lVal then realLevel = lVal.Value end
     end
 
     local leaderstats = plr:FindFirstChild("leaderstats")
     if leaderstats then
-        local tVal = leaderstats:FindFirstChild("Tokens") or leaderstats:FindFirstChild("Token") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash")
+        local mVal = leaderstats:FindFirstChild("Tokens") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Coins")
         local lVal = leaderstats:FindFirstChild("Level") or leaderstats:FindFirstChild("LVL")
-        if tVal and not realTokens then realTokens = tVal.Value end
+        if mVal and not realMoney then realMoney = mVal.Value end
         if lVal and not realLevel then realLevel = lVal.Value end
     end
-
-    realTokens = realTokens or 0
-    realLevel = realLevel or 18
-
-    return realTokens, realLevel
+    return realMoney or 0, realLevel or 1
 end
 
 task.spawn(function()
     while true do
-        local tokens, level = GetEvadeRealData()
-        StatsDisplay.Text = string.format("💵 Tokens: %s  |  ⭐ Level: %s", tostring(tokens), tostring(level))
+        local m, l = GetUniversalRealData()
+        StatsDisplay.Text = string.format("💵 Money/Tokens: %s  |  ⭐ Level: %s", tostring(m), tostring(l))
         task.wait(0.5)
     end
 end)
-
--- ==================== LOGIC AUTO WIN EVADE ====================
-local runningAutoWin = false
-local SafePlatform = nil
-
-local function EnableAutoWin()
-    if not SafePlatform or not SafePlatform.Parent then
-        SafePlatform = Instance.new("Part")
-        SafePlatform.Name = "EclipserEvadeSafeZone"
-        SafePlatform.Size = Vector3.new(30, 2, 30)
-        SafePlatform.Position = Vector3.new(0, 500, 0)
-        SafePlatform.Anchored = true
-        SafePlatform.CanCollide = true
-        SafePlatform.Material = Enum.Material.SmoothPlastic
-        SafePlatform.Color = Color3.fromRGB(30, 30, 30)
-        SafePlatform.Parent = workspace
-    end
-
-    task.spawn(function()
-        while runningAutoWin do
-            local char = plr.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                if (hrp.Position - (SafePlatform.Position + Vector3.new(0, 3, 0))).Magnitude > 5 then
-                    hrp.CFrame = SafePlatform.CFrame + Vector3.new(0, 3, 0)
-                end
-            end
-            task.wait(0.1)
-        end
-    end)
-end
-
-local function DisableAutoWin()
-    if SafePlatform then
-        SafePlatform:Destroy()
-        SafePlatform = nil
-    end
-    local char = plr.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local randomX = math.random(-50, 50)
-        local randomZ = math.random(-50, 50)
-        char.HumanoidRootPart.CFrame = CFrame.new(randomX, 5, randomZ)
-    end
-end
 
 -- ==================== DYNAMIC ISLAND & METRICS ====================
 local DynamicIsland = Instance.new("Frame")
@@ -255,7 +258,7 @@ local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, -55, 1, 0)
 StatusText.Position = UDim2.new(0, 12, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "⚡ eclipser hub | San sang"
+StatusText.Text = "⚡ eclipser hub | Universal Edition"
 StatusText.TextColor3 = Color3.fromRGB(220, 220, 220)
 StatusText.Font = Enum.Font.SourceSansBold
 StatusText.TextSize = 12
@@ -283,7 +286,7 @@ local function SetStatus(txt)
     StatusText.Text = "⚡ " .. txt
 end
 
--- ==================== NUT TOGGLE ECLIPSER ====================
+-- ==================== NÚT TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 60, 0, 38)
@@ -320,7 +323,6 @@ task.spawn(function()
     local lastTime = tick()
     local frameCount = 0
     local fps = 60
-
     RunService.RenderStepped:Connect(function()
         frameCount = frameCount + 1
         local now = tick()
@@ -330,7 +332,6 @@ task.spawn(function()
             lastTime = now
         end
     end)
-
     while true do
         local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
         local ms = math.floor((1 / math.max(fps, 1)) * 1000)
@@ -342,8 +343,8 @@ end)
 -- ==================== MAIN FRAME ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 360, 0, 260)
-MainFrame.Position = UDim2.new(0.5, -180, 0.5, -130)
+MainFrame.Size = UDim2.new(0, 450, 0, 330)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -165)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
@@ -358,7 +359,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 0, 35)
 Title.Position = UDim2.new(0, 12, 0, 2)
 Title.BackgroundTransparency = 1
-Title.Text = "Evade | eclipser hub"
+Title.Text = "eclipser hub | Universal Edition"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
@@ -392,23 +393,72 @@ MinimizeBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = menuVisible
 end)
 
--- ==================== MENU CONTROLS ====================
-local Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1, -20, 1, -45)
-Container.Position = UDim2.new(0, 10, 0, 40)
-Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 0, 220)
-Container.ScrollBarThickness = 2
-Container.ZIndex = 11
-Container.Parent = MainFrame
+-- ==================== TAB HOLDER & CONTAINERS ====================
+local TabHolder = Instance.new("ScrollingFrame")
+TabHolder.Size = UDim2.new(0, 110, 1, -45)
+TabHolder.Position = UDim2.new(0, 8, 0, 38)
+TabHolder.BackgroundTransparency = 1
+TabHolder.ScrollBarThickness = 0
+TabHolder.ZIndex = 11
+TabHolder.Parent = MainFrame
 
-local UIList = Instance.new("UIListLayout")
-UIList.Padding = UDim.new(0, 6)
-UIList.Parent = Container
+local UIListTab = Instance.new("UIListLayout")
+UIListTab.Padding = UDim.new(0, 4)
+UIListTab.Parent = TabHolder
 
+local tabs = {"Game", "General", "Combat", "Visuals", "Settings"}
+local containers = {}
+
+for i, tabName in ipairs(tabs) do
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Size = UDim2.new(1, 0, 0, 30)
+    TabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(22, 22, 22)
+    TabBtn.BorderSizePixel = 0
+    TabBtn.Text = tabName
+    TabBtn.TextColor3 = (i == 1) and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+    TabBtn.Font = Enum.Font.SourceSansBold
+    TabBtn.TextSize = 12
+    TabBtn.ZIndex = 12
+    TabBtn.Parent = TabHolder
+
+    local cTab = Instance.new("UICorner")
+    cTab.CornerRadius = UDim.new(0, 6)
+    cTab.Parent = TabBtn
+
+    local Container = Instance.new("ScrollingFrame")
+    Container.Size = UDim2.new(1, -132, 1, -45)
+    Container.Position = UDim2.new(0, 124, 0, 38)
+    Container.BackgroundTransparency = 1
+    Container.Visible = (i == 1)
+    Container.CanvasSize = UDim2.new(0, 0, 0, 480)
+    Container.ScrollBarThickness = 2
+    Container.ZIndex = 11
+    Container.Parent = MainFrame
+
+    local UIListC = Instance.new("UIListLayout")
+    UIListC.Padding = UDim.new(0, 6)
+    UIListC.Parent = Container
+
+    containers[tabName] = Container
+
+    TabBtn.MouseButton1Click:Connect(function()
+        for _, c in pairs(containers) do c.Visible = false end
+        for _, b in pairs(TabHolder:GetChildren()) do
+            if b:IsA("TextButton") then
+                b.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+                b.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end
+        end
+        Container.Visible = true
+        TabBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+        TabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    end)
+end
+
+-- ==================== HÀM TẠO WIDGET ====================
 local function CreateToggle(parent, text, defaultState, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 32)
+    frame.Size = UDim2.new(1, 0, 0, 30)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 11
     frame.Parent = parent
@@ -467,24 +517,447 @@ local function CreateToggle(parent, text, defaultState, callback)
     end)
 end
 
--- ==================== CAC NUT TINH NANG ====================
-CreateToggle(Container, "Auto Win (TP Tren Troi)", false, function(v)
-    runningAutoWin = v
-    if v then
-        EnableAutoWin()
-    else
-        DisableAutoWin()
+local function CreateSlider(parent, title, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 38)
+    frame.BackgroundTransparency = 1
+    frame.ZIndex = 11
+    frame.Parent = parent
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 16)
+    label.BackgroundTransparency = 1
+    label.Text = title .. ": " .. tostring(default)
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextSize = 12
+    label.Font = Enum.Font.SourceSansBold
+    label.ZIndex = 12
+    label.Parent = frame
+
+    local sliderBg = Instance.new("TextButton")
+    sliderBg.Size = UDim2.new(1, 0, 0, 10)
+    sliderBg.Position = UDim2.new(0, 0, 0, 20)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    sliderBg.BorderSizePixel = 0
+    sliderBg.Text = ""
+    sliderBg.ZIndex = 12
+    sliderBg.Parent = frame
+
+    local sc = Instance.new("UICorner")
+    sc.CornerRadius = UDim.new(1, 0)
+    sc.Parent = sliderBg
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 13
+    fill.Parent = sliderBg
+
+    local fc = Instance.new("UICorner")
+    fc.CornerRadius = UDim.new(1, 0)
+    fc.Parent = fill
+
+    local sliding = false
+    local function updateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+        local val = math.floor(min + (max - min) * pos)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        label.Text = title .. ": " .. tostring(val)
+        if callback then callback(val) end
+    end
+
+    sliderBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            sliding = true
+            updateSlider(input)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            sliding = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            updateSlider(input)
+        end
+    end)
+end
+
+local function CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 28)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    btn.BorderSizePixel = 0
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.ZIndex = 12
+    btn.Parent = parent
+
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(0, 6)
+    bc.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        if callback then callback() end
+    end)
+end
+
+-- ==================== 1. TAB GAME (DASHBOARD REAL-TIME) ====================
+local function CreateInfoLabel(parent, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 24)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.ZIndex = 12
+    lbl.Parent = parent
+    return lbl
+end
+
+local gameNameLabel = CreateInfoLabel(containers["Game"], "🎮 Game: Dang tai...")
+local userNameLabel = CreateInfoLabel(containers["Game"], "👤 Name: " .. plr.DisplayName .. " (@" .. plr.Name .. ")")
+local genreLabel = CreateInfoLabel(containers["Game"], "🏷️ The loai game: Dang phan loai...")
+local scriptTimeLabel = CreateInfoLabel(containers["Game"], "⏱️ Thoi gian bat script: 00:00:00")
+local inGameTimeLabel = CreateInfoLabel(containers["Game"], "⏳ Thoi gian trong game: 00:00:00")
+
+task.spawn(function()
+    pcall(function()
+        local info = MarketplaceService:GetProductInfo(game.PlaceId)
+        if info and info.Name then gameNameLabel.Text = "🎮 Game: " .. info.Name end
+    end)
+end)
+
+task.spawn(function()
+    local placeId = game.PlaceId
+    pcall(function()
+        local info = MarketplaceService:GetProductInfo(placeId)
+        local lowerName = string.lower(info.Name or "")
+        if string.find(lowerName, "evade") or string.find(lowerName, "doors") or string.find(lowerName, "horror") then
+            genreLabel.Text = "🏷️ The loai game: Kinh di / Sinh ton (Horror/Survival)"
+        elseif string.find(lowerName, "break") or string.find(lowerName, "ragdoll") or string.find(lowerName, "bone") then
+            genreLabel.Text = "🏷️ The loai game: Vat ly / Simulation (Physics)"
+        elseif string.find(lowerName, "blox fruit") or string.find(lowerName, "anime") or string.find(lowerName, "rpg") then
+            genreLabel.Text = "🏷️ The loai game: Nhap vai / Anime (Action RPG)"
+        else
+            genreLabel.Text = "🏷️ The loai game: Universal / Adventure"
+        end
+    end)
+end)
+
+local function formatTime(seconds)
+    local hrs = math.floor(seconds / 3600)
+    local mins = math.floor((seconds % 3600) / 60)
+    local secs = math.floor(seconds % 60)
+    return string.format("%02d:%02d:%02d", hrs, mins, secs)
+end
+
+task.spawn(function()
+    while true do
+        scriptTimeLabel.Text = "⏱️ Thoi gian bat script: " .. formatTime(tick() - scriptStartTime)
+        inGameTimeLabel.Text = "⏳ Thoi gian trong game: " .. formatTime(workspace.DistributedGameTime)
+        task.wait(1)
     end
 end)
 
-CreateToggle(Container, "Disable 3D Rendering (Man Den)", false, function(v)
+-- ==================== 2. TAB GENERAL (CHUYỂN ĐỘNG & BẢO VỆ) ====================
+CreateSlider(containers["General"], "WalkSpeed", 16, 300, 16, function(val)
+    walkSpeedVal = val
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid.WalkSpeed = val
+    end
+end)
+
+CreateSlider(containers["General"], "JumpPower", 50, 500, 50, function(val)
+    jumpPowerVal = val
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid.JumpPower = val
+    end
+end)
+
+-- FLY HACK PHÍM E
+local function startFlying()
+    local char = plr.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local bodyVel = Instance.new("BodyVelocity")
+    bodyVel.Name = "EclipserFlyVelocity"
+    bodyVel.Velocity = Vector3.new(0, 0, 0)
+    bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVel.Parent = hrp
+
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.Name = "EclipserFlyGyro"
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.CFrame = hrp.CFrame
+    bodyGyro.Parent = hrp
+
+    flyConnection = RunService.RenderStepped:Connect(function()
+        if not runningFly or not char or not hrp then
+            bodyVel:Destroy()
+            bodyGyro:Destroy()
+            if flyConnection then flyConnection:Disconnect() end
+            return
+        end
+
+        local cam = workspace.CurrentCamera
+        local moveDir = Vector3.new()
+
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+
+        bodyVel.Velocity = moveDir * flySpeed
+        bodyGyro.CFrame = cam.CFrame
+    end)
+end
+
+CreateToggle(containers["General"], "Fly Hack (Phim E de Bat/Tat)", false, function(v)
+    runningFly = v
+    if v then startFlying() end
+end)
+
+CreateSlider(containers["General"], "Fly Speed", 10, 200, 50, function(val) flySpeed = val end)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.E then
+        runningFly = not runningFly
+        if runningFly then startFlying() SetStatus("Fly Hack: BAT") else SetStatus("Fly Hack: TAT") end
+    end
+end)
+
+CreateToggle(containers["General"], "Godmode (Chong Chet / Void Fall)", false, function(v)
+    runningGodmode = v
+    if v then
+        task.spawn(function()
+            while runningGodmode do
+                local char = plr.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    char.Humanoid.Health = char.Humanoid.MaxHealth
+                    if char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.Position.Y < -200 then
+                        char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
+                    end
+                end
+                task.wait(0.2)
+            end
+        end)
+    end
+end)
+
+CreateToggle(containers["General"], "Infinite Jump", false, function(v) runningInfJump = v end)
+UserInputService.JumpRequest:Connect(function()
+    if runningInfJump and plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+CreateToggle(containers["General"], "Noclip (Xuyen Tuong)", false, function(v) runningNoclip = v end)
+RunService.Stepped:Connect(function()
+    if runningNoclip and plr.Character then
+        for _, part in pairs(plr.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
+
+CreateToggle(containers["General"], "Click Teleport (Ctrl + Click)", false, function(v) runningClickTP = v end)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and runningClickTP and input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+        local mouse = plr:GetMouse()
+        if mouse.Hit and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            plr.Character.HumanoidRootPart.CFrame = mouse.Hit + Vector3.new(0, 3, 0)
+        end
+    end
+end)
+
+CreateToggle(containers["General"], "Anti Ragdoll", false, function(v)
+    runningAntiRagdoll = v
+    task.spawn(function()
+        while runningAntiRagdoll do
+            local char = plr.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+                char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            end
+            task.wait(0.5)
+        end
+    end)
+end)
+
+CreateToggle(containers["General"], "Anti Block", false, function(v) runningAntiBlock = v end)
+CreateToggle(containers["General"], "Anti Kick", true, function(v) runningAntiKick = v end)
+CreateToggle(containers["General"], "Anti AFK", true, function(v) runningAntiAFK = v end)
+CreateToggle(containers["General"], "Auto Rejoin", false, function(v) runningAutoRejoin = v end)
+
+-- ==================== 3. TAB COMBAT (HITBOX & REACH) ====================
+CreateToggle(containers["Combat"], "Hitbox Ke Thu", false, function(v)
+    runningHitbox = v
+    task.spawn(function()
+        while runningHitbox do
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= plr and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                    hrp.Transparency = 0.6
+                    hrp.BrickColor = BrickColor.new("Really red")
+                    hrp.CanCollide = false
+                end
+            end
+            task.wait(1)
+        end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= plr and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+            end
+        end
+    end)
+end)
+
+CreateSlider(containers["Combat"], "Kich Thuoc Hitbox (+ / -)", 2, 50, 10, function(val) hitboxSize = val end)
+
+CreateToggle(containers["Combat"], "Reach Weapon (Tam Danh Xa)", false, function(v)
+    runningReach = v
+    task.spawn(function()
+        while runningReach do
+            local char = plr.Character
+            if char then
+                local tool = char:FindFirstChildOfClass("Tool")
+                if tool and tool:FindFirstChild("Handle") then
+                    tool.Handle.Size = Vector3.new(reachSize, reachSize, reachSize)
+                    tool.Handle.Transparency = 0.8
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+end)
+
+CreateSlider(containers["Combat"], "Tam Reach Weapon", 2, 30, 5, function(val) reachSize = val end)
+
+-- ==================== 4. TAB VISUALS (ESP & FPS BOOSTER) ====================
+CreateToggle(containers["Visuals"], "ESP Box (Khung Xuyen Tuong)", false, function(v)
+    runningESPBox = v
+    task.spawn(function()
+        while runningESPBox do
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= plr and p.Character then
+                    local char = p.Character
+                    if not char:FindFirstChild("EclipserESPBox") then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "EclipserESPBox"
+                        hl.FillColor = Color3.fromRGB(0, 255, 150)
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        hl.FillTransparency = 0.6
+                        hl.Adornee = char
+                        hl.Parent = char
+                    end
+                end
+            end
+            task.wait(1)
+        end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("EclipserESPBox") then
+                p.Character.EclipserESPBox:Destroy()
+            end
+        end
+    end)
+end)
+
+CreateToggle(containers["Visuals"], "ESP Name (Hien Ten Nguoi Choi)", false, function(v)
+    runningESPName = v
+    task.spawn(function()
+        while runningESPName do
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= plr and p.Character and p.Character:FindFirstChild("Head") then
+                    local head = p.Character.Head
+                    if not head:FindFirstChild("EclipserESPName") then
+                        local bill = Instance.new("BillboardGui")
+                        bill.Name = "EclipserESPName"
+                        bill.Size = UDim2.new(0, 100, 0, 40)
+                        bill.StudsOffset = Vector3.new(0, 2.5, 0)
+                        bill.AlwaysOnTop = true
+                        bill.Parent = head
+
+                        local lbl = Instance.new("TextLabel")
+                        lbl.Size = UDim2.new(1, 0, 1, 0)
+                        lbl.BackgroundTransparency = 1
+                        lbl.Text = p.Name
+                        lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        lbl.TextStrokeTransparency = 0
+                        lbl.Font = Enum.Font.SourceSansBold
+                        lbl.TextSize = 14
+                        lbl.Parent = bill
+                    end
+                end
+            end
+            task.wait(1)
+        end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("Head") and p.Character.Head:FindFirstChild("EclipserESPName") then
+                p.Character.Head.EclipserESPName:Destroy()
+            end
+        end
+    end)
+end)
+
+CreateToggle(containers["Visuals"], "ESP Glass (Xuyen Kinh / Vat Can)", false, function(v)
+    runningESPGlass = v
+    task.spawn(function()
+        while runningESPGlass do
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("BasePart") and (v.Material == Enum.Material.Glass or v.Transparency > 0) then
+                    v.LocalTransparencyModifier = 0.5
+                end
+            end
+            task.wait(2)
+        end
+    end)
+end)
+
+CreateToggle(containers["Visuals"], "Super FPS Booster", false, function(v) applySuperFPS(v) end)
+
+CreateToggle(containers["Visuals"], "Fullbright (Sang Ban Dem)", false, function(v)
+    runningFullbright = v
+    if v then
+        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        Lighting.Brightness = 2
+    else
+        Lighting.Ambient = Color3.fromRGB(128, 128, 128)
+        Lighting.Brightness = 1
+    end
+end)
+
+CreateSlider(containers["Visuals"], "Field Of View (FOV)", 70, 120, 70, function(val)
+    workspace.CurrentCamera.FieldOfView = val
+end)
+
+-- ==================== 5. TAB SETTINGS ====================
+CreateToggle(containers["Settings"], "Disable 3D Rendering (Man Den)", false, function(v)
     BlackScreenFrame.Visible = v
     StatsDisplay.Visible = v
     RunService:Set3dRenderingEnabled(not v)
 end)
 
-CreateToggle(Container, "He Thong Anti-AFK", true, function(v)
-    runningAntiAFK = v
+CreateButton(containers["Settings"], "Rejoin Server (Vao Lai Game)", function()
+    TeleportService:Teleport(game.PlaceId, plr)
+end)
+
+CreateButton(containers["Settings"], "Server Hop (Doi Server Khac)", function()
+    TeleportService:Teleport(game.PlaceId)
 end)
 
 LangBtn.MouseButton1Click:Connect(function()
@@ -499,23 +972,21 @@ LangBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ==================== CHAY ANIMATION INTRO LOAD 0-100% ====================
+-- ==================== CHẠY INTRO LOAD 0 - 100% ====================
 task.spawn(function()
     for i = 0, 100 do
-        PercentLabel.Text = "Loading... " .. i .. "%"
+        PercentLabel.Text = "Universal Hub Loading... " .. i .. "%"
         ProgressBar.Size = UDim2.new(i / 100, 0, 1, 0)
         task.wait(0.015)
     end
 
     task.wait(0.2)
-    
     local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local fadeOut = TweenService:Create(LoadingFrame, tweenInfo, {BackgroundTransparency = 1})
     fadeOut:Play()
     
     fadeOut.Completed:Connect(function()
         LoadingFrame:Destroy()
-        
         DynamicIsland.Visible = true
         MetricsText.Visible = true
         ToggleBtn.Visible = true
