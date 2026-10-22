@@ -1,4 +1,4 @@
--- [[ ECLIPSER HUB - UNIVERSAL MASTER ULTIMATE EDITION (FULL VIP & SERVER) ]]
+-- [[ ECLIPSER HUB - UNIVERSAL MASTER ULTIMATE EDITION (FULL COMPLETE) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -461,7 +461,7 @@ for i, tabName in ipairs(tabs) do
     Container.Position = UDim2.new(0, 124, 0, 38)
     Container.BackgroundTransparency = 1
     Container.Visible = (i == 1)
-    Container.CanvasSize = UDim2.new(0, 0, 0, 620)
+    Container.CanvasSize = UDim2.new(0, 0, 0, 680)
     Container.ScrollBarThickness = 2
     Container.ZIndex = 11
     Container.Parent = MainFrame
@@ -708,7 +708,7 @@ task.spawn(function()
     end
 end)
 
--- ==================== 2. TAB GENERAL ====================
+-- ==================== 2. TAB GENERAL (CÓ FLY SPEED) ====================
 CreateSlider(containers["General"], "WalkSpeed", 16, 300, 16, function(val)
     if plr.Character and plr.Character:FindFirstChild("Humanoid") then plr.Character.Humanoid.WalkSpeed = val end
 end)
@@ -984,7 +984,7 @@ end)
 CreateButton(containers["Settings"], "Rejoin Server (Vao Lai Game)", function() TeleportService:Teleport(game.PlaceId, plr) end)
 CreateButton(containers["Settings"], "Server Hop (Doi Server Khac)", function() TeleportService:Teleport(game.PlaceId) end)
 
--- ==================== 6. TAB SERVER & VIP SERVER (CẬP NHẬT MỚI NHẤT) ====================
+-- ==================== 6. TAB SERVER & VIP SERVER (ĐÃ TÁCH RÕ RÀNG) ====================
 local function FetchServers()
     local servers = {}
     pcall(function()
@@ -995,7 +995,7 @@ local function FetchServers()
     return servers
 end
 
-CreateInfoLabel(containers["Server"], "--- SERVER HOP (CHUNG) ---")
+CreateInfoLabel(containers["Server"], "--- 1. SERVER HOP (CHUNG) ---")
 
 CreateButton(containers["Server"], "Vao Server Co Nhieu Nguoi Nhat", function()
     SetStatus("Dang tim Server dong nhat...")
@@ -1032,7 +1032,7 @@ CreateButton(containers["Server"], "Tim Server Co Nguoi Dang Treo (AFK)", functi
     end
 end)
 
-CreateInfoLabel(containers["Server"], "--- VIP SERVER (QUẢN LÝ RIÊNG TƯ) ---")
+CreateInfoLabel(containers["Server"], "--- 2. QUẢN LÝ LINK VIP SERVER ---")
 
 CreateTextBox(containers["Server"], "Dan Link Server VIP hoac Access Code...", function(txt)
     vipLinkInput = txt
@@ -1067,6 +1067,8 @@ CreateButton(containers["Server"], "Join Server VIP Nhanh", function()
         SetStatus("Vui long nhap Link/Code VIP truoc!")
     end
 end)
+
+CreateInfoLabel(containers["Server"], "--- 3. TẠO SERVER VIP FREE (SOLO) ---")
 
 CreateButton(containers["Server"], "Tao Server VIP Free (Solo 1 Nguoi)", function()
     SetStatus("Dang quet tim phong trong 1 nguoi...")
