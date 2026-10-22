@@ -1,4 +1,4 @@
--- [[ ECLIPSER HUB - BREAK YOUR BONES (UPDATED UI & ANTI-AFK & 3D RENDER) ]]
+-- [[ ECLIPSER HUB - BREAK YOUR BONES (SMART FARM & FIXED UI EDITION) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -19,36 +19,35 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EclipserHubUI"
 ScreenGui.Parent = CoreGui
-ScreenGui.DisplayOrder = 999999 -- Đảm bảo luôn đè lên các UI khác của game
+ScreenGui.DisplayOrder = 999999
 
 local CurrentLang = "VN"
 
--- ==================== 0. KÍCH HOẠT ANTI-AFK (ẨN) ====================
+-- ==================== 0. ANTI-AFK SYSTEM ====================
+local runningAntiAFK = false
 plr.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    if runningAntiAFK then
+        VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    end
 end)
 
--- ==================== AUTO FPS BOOSTER (TỰ KÍCH HOẠT ẨN) ====================
+-- ==================== AUTO FPS BOOSTER (ẨN) ====================
 task.spawn(function()
     pcall(function()
         Lighting.GlobalShadows = false
         Lighting.FogEnd = 9e9
-        
         for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
-                v.Enabled = false
-            elseif v:IsA("PostEffect") then
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("PostEffect") then
                 v.Enabled = false
             end
         end
-        
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
     end)
 end)
 
--- ==================== DISABLE 3D RENDERING FRAME (MÀN HÌNH ĐEN 9999) ====================
+-- ==================== DISABLE 3D RENDERING FRAME (MÀN ĐEN 9999PX - ZINDEX 1) ====================
 local BlackScreenFrame = Instance.new("Frame")
 BlackScreenFrame.Name = "BlackScreenFrame"
 BlackScreenFrame.Size = UDim2.new(0, 9999, 0, 9999)
@@ -56,16 +55,57 @@ BlackScreenFrame.Position = UDim2.new(0.5, -5000, 0.5, -5000)
 BlackScreenFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 BlackScreenFrame.BorderSizePixel = 0
 BlackScreenFrame.Visible = false
-BlackScreenFrame.ZIndex = 1 -- Đặt chìm dưới cùng
+BlackScreenFrame.ZIndex = 1 -- Chìm dưới cùng
 BlackScreenFrame.Parent = ScreenGui
 
--- ==================== LOGIC GAME THẬT ====================
+-- ==================== BẢNG HIỂN THỊ TIỀN REAL-TIME (ZINDEX 2) ====================
+local MoneyDisplay = Instance.new("TextLabel")
+MoneyDisplay.Name = "MoneyDisplay"
+MoneyDisplay.Size = UDim2.new(0, 260, 0, 35)
+MoneyDisplay.Position = UDim2.new(0.5, -130, 0, 80)
+MoneyDisplay.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MoneyDisplay.BackgroundTransparency = 0.2
+MoneyDisplay.Text = "💰 Money: Loading..."
+MoneyDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
+MoneyDisplay.Font = Enum.Font.SourceSansBold
+MoneyDisplay.TextSize = 16
+MoneyDisplay.Visible = false
+MoneyDisplay.ZIndex = 2 -- Nổi trên màn đen, dưới UI menu
+MoneyDisplay.Parent = ScreenGui
+
+local UICornerMoney = Instance.new("UICorner")
+UICornerMoney.CornerRadius = UDim.new(0, 8)
+UICornerMoney.Parent = MoneyDisplay
+
+local UIStrokeMoney = Instance.new("UIStroke")
+UIStrokeMoney.Color = Color3.fromRGB(255, 215, 0)
+UIStrokeMoney.Thickness = 1.5
+UIStrokeMoney.Parent = MoneyDisplay
+
+-- Lấy dữ liệu tiền thật từ Game
+task.spawn(function()
+    while true do
+        local leaderstats = plr:FindFirstChild("leaderstats")
+        local moneyVal = leaderstats and (leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Coins"))
+        if moneyVal then
+            MoneyDisplay.Text = "💰 Money: " .. tostring(moneyVal.Value)
+        else
+            MoneyDisplay.Text = "💰 Money: " .. tostring(plr:GetAttribute("Money") or 0)
+        end
+        task.wait(0.5)
+    end
+end)
+
+-- ==================== LOGIC GAME THẬT & SMART FARM ====================
 local runningAutofarm = false
 local runningUpgrade = false
 local runningNextRagdoll = false
 local runningRefine = false
+local runningSmartFarm = false
+
 local slamDuration = 20
 local slamVelocity = 100
+local smartPauseUpgrade = false
 
 local function setFrozen(char, state)
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -124,7 +164,7 @@ local function autofarmLoop()
                 local targetPart = workspace:GetChildren()[50]
                 local teleportTarget = spawnFolder:GetChildren()[84]
                 if targetPart and teleportTarget then
-                    if SetStatus then SetStatus("Autofarm: Đang va chạm Ragdoll...") end
+                    if SetStatus then SetStatus("Autofarm: Va chạm Ragdoll...") end
                     fireRagdollTouch()
                     local startTime = tick()
                     while tick()-startTime < slamDuration and runningAutofarm do
@@ -160,7 +200,7 @@ local function autofarmLoop()
 end
 
 local function autoUpgradeLoop()
-    while runningUpgrade do
+    while runningUpgrade or (runningSmartFarm and not smartPauseUpgrade) do
         Remotes.PurchaseBoneUpgrade:FireServer("Head")
         Remotes.PurchaseBoneUpgrade:FireServer("Torso")
         Remotes.PurchaseBoneUpgrade:FireServer("Arm")
@@ -170,16 +210,43 @@ local function autoUpgradeLoop()
 end
 
 local function autoNextRagdollLoop()
-    while runningNextRagdoll do
+    while runningNextRagdoll or runningSmartFarm do
         Remotes.PurchaseNextRagdoll:FireServer()
         task.wait(0.5)
     end
 end
 
 local function autoRefineLoop()
-    while runningRefine do
+    while runningRefine or (runningSmartFarm and not smartPauseUpgrade) do
         Remotes.RefineRagdoll:FireServer()
         task.wait(0.5)
+    end
+end
+
+-- LOGIC SMART FARM
+local function smartFarmLoop()
+    local lastLevel = 0
+    while runningSmartFarm do
+        task.wait(0.5)
+        -- Kiểm tra dữ liệu Level/Ragdoll thật từ Player
+        local currentLevel = plr:GetAttribute("RagdollLevel") or plr:GetAttribute("Level") or 0
+        local refineStat = plr:GetAttribute("RefinePercent") or 100 -- Trích xuất tỷ lệ Refine
+
+        -- Nếu Refine dưới 20% -> Tạm dừng Upgrade & Refine
+        if refineStat < 20 then
+            smartPauseUpgrade = true
+            if SetStatus then SetStatus("Smart: Refine <20%! Tạm dừng up để dành Ragdoll mới") end
+        else
+            smartPauseUpgrade = false
+        end
+
+        -- Giới hạn nâng đúng +10 Level cho mỗi Ragdoll mới (Mốc 10, 20, 30, 40...)
+        if currentLevel > 0 and currentLevel % 10 == 0 and currentLevel ~= lastLevel then
+            lastLevel = currentLevel
+            smartPauseUpgrade = true
+            if SetStatus then SetStatus("Smart: Đã đạt mốc " .. currentLevel .. " Level! Đợi Ragdoll mới") end
+            task.wait(3)
+        end
     end
 end
 
@@ -261,11 +328,11 @@ PercentLabel.TextSize = 12
 PercentLabel.ZIndex = 21
 PercentLabel.Parent = LoadingFrame
 
--- ==================== DYNAMIC ISLAND & METRICS PANEL ====================
+-- ==================== DYNAMIC ISLAND & METRICS PANEL (ZINDEX 10) ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
 DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
-DynamicIsland.Position = UDim2.new(0.5, -195, 0, 12) -- Dịch sang trái một chút để nhường chỗ cho nút eclipser
+DynamicIsland.Position = UDim2.new(0.5, -195, 0, 12)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DynamicIsland.Visible = false
 DynamicIsland.ZIndex = 10
@@ -284,7 +351,7 @@ local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, -55, 1, 0)
 StatusText.Position = UDim2.new(0, 12, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "⚡ eclipser hub | Anti-AFK Active"
+StatusText.Text = "⚡ eclipser hub | Ready"
 StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
 StatusText.Font = Enum.Font.SourceSansBold
 StatusText.TextSize = 12
@@ -311,7 +378,7 @@ SetStatus = function(txt)
     StatusText.Text = "⚡ " .. txt
 end
 
--- ==================== NÚT TOGGLE ECLIPSER (ĐẶT CẠNH DYNAMIC ISLAND - CÁCH 10PX) ====================
+-- ==================== NÚT TOGGLE ECLIPSER VUÔNG TRÒN / SQUIRCLE (CÁCH 10PX) ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 60, 0, 38)
@@ -322,11 +389,11 @@ ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.TextSize = 12
 ToggleBtn.Font = Enum.Font.SourceSansBold
 ToggleBtn.Visible = false
-ToggleBtn.ZIndex = 10
+ToggleBtn.ZIndex = 10 -- Luôn nổi trên màn đen
 ToggleBtn.Parent = ScreenGui
 
 local UICornerToggle = Instance.new("UICorner")
-UICornerToggle.CornerRadius = UDim.new(1, 0)
+UICornerToggle.CornerRadius = UDim.new(0, 10) -- Bo góc Squircle vuông tròn chuẩn
 UICornerToggle.Parent = ToggleBtn
 
 local UIStrokeToggle = Instance.new("UIStroke")
@@ -334,7 +401,7 @@ UIStrokeToggle.Color = Color3.fromRGB(255, 255, 255)
 UIStrokeToggle.Thickness = 2
 UIStrokeToggle.Parent = ToggleBtn
 
--- ==================== METRICS DISPLAY (CHỮ CẦU VỒNG HSV CỰC CHUẨN) ====================
+-- ==================== METRICS DISPLAY (CHỮ CẦU VỒNG HSV) ====================
 local MetricsText = Instance.new("TextLabel")
 MetricsText.Name = "MetricsText"
 MetricsText.Size = UDim2.new(0, 320, 0, 20)
@@ -347,7 +414,6 @@ MetricsText.Visible = false
 MetricsText.ZIndex = 10
 MetricsText.Parent = ScreenGui
 
--- Xoay màu chữ cầu vồng trực tiếp qua HSV
 task.spawn(function()
     local hue = 0
     while true do
@@ -357,7 +423,6 @@ task.spawn(function()
     end
 end)
 
--- Đo đạc thông số thực
 task.spawn(function()
     local lastTime = tick()
     local frameCount = 0
@@ -376,7 +441,6 @@ task.spawn(function()
     while true do
         local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
         local ms = math.floor((1 / math.max(fps, 1)) * 1000)
-        
         MetricsText.Text = string.format("Fps: %d | Ms: %dms | Ping: %dms", fps, ms, ping)
         task.wait(0.5)
     end
@@ -385,12 +449,12 @@ end)
 -- ==================== MAIN FRAME (RGB BORDER 360°) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 290)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -145)
+MainFrame.Size = UDim2.new(0, 380, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -155)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
-MainFrame.ZIndex = 10
+MainFrame.ZIndex = 10 -- Nổi trên cùng
 MainFrame.Parent = ScreenGui
 
 local UICornerMain = Instance.new("UICorner")
@@ -444,7 +508,7 @@ MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
 MinimizeBtn.TextSize = 12
 MinimizeBtn.ZIndex = 11
-MinimizeBtn.Parent = MainFrame
+MinimizeBtn.Parent = MinimizeBtn
 
 local UICornerMin = Instance.new("UICorner")
 UICornerMin.CornerRadius = UDim.new(0, 4)
@@ -460,12 +524,12 @@ MinimizeBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = menuVisible
 end)
 
--- ==================== SYSTEM CONTROLS ====================
+-- ==================== MENU CONTROLS ====================
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -45)
 Container.Position = UDim2.new(0, 10, 0, 40)
 Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 0, 380)
+Container.CanvasSize = UDim2.new(0, 0, 0, 420)
 Container.ScrollBarThickness = 2
 Container.ZIndex = 11
 Container.Parent = MainFrame
@@ -600,9 +664,24 @@ local function CreateSlider(parent, title, min, max, default, callback)
     end)
 end
 
--- ==================== ĐỒNG BỘ CÁC MỤC TÍNH NĂNG ====================
-CreateToggle(Container, "Disable 3D Rendering (Màn Đen Treo Game)", false, function(v)
+-- ==================== CÁC NÚT TÍNH NĂNG ====================
+CreateToggle(Container, "Smart Farm (Smart Mode)", false, function(v)
+    runningSmartFarm = v
+    if v then
+        task.spawn(smartFarmLoop)
+        task.spawn(autoUpgradeLoop)
+        task.spawn(autoNextRagdollLoop)
+        task.spawn(autoRefineLoop)
+    end
+end)
+
+CreateToggle(Container, "Anti-AFK System", false, function(v)
+    runningAntiAFK = v
+end)
+
+CreateToggle(Container, "Disable 3D Rendering (Màn Đen Treo)", false, function(v)
     BlackScreenFrame.Visible = v
+    MoneyDisplay.Visible = v
     RunService:Set3dRenderingEnabled(not v)
 end)
 
@@ -638,7 +717,7 @@ LangBtn.MouseButton1Click:Connect(function()
     if CurrentLang == "VN" then
         CurrentLang = "EN"
         LangBtn.Text = "EN"
-        SetStatus("Language switched to EN")
+        SetStatus("Switched to EN")
     else
         CurrentLang = "VN"
         LangBtn.Text = "VN"
@@ -646,7 +725,7 @@ LangBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ==================== CHẠY ANIMATION INTRO ====================
+-- ==================== ANIMATION INTRO ====================
 task.spawn(function()
     for i = 0, 100 do
         PercentLabel.Text = "Loading... " .. i .. "%"
@@ -662,7 +741,6 @@ task.spawn(function()
     
     fadeOut.Completed:Connect(function()
         LoadingFrame:Destroy()
-        
         DynamicIsland.Visible = true
         MetricsText.Visible = true
         ToggleBtn.Visible = true
