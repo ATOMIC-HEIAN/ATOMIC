@@ -1,4 +1,4 @@
--- [[ ECLIPSER HUB - BREAK YOUR BONES (SMART FARM & FIXED UI EDITION) ]]
+-- [[ ECLIPSER HUB - BREAK YOUR BONES (FIXED 0% LOADING BUG) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -47,7 +47,7 @@ task.spawn(function()
     end)
 end)
 
--- ==================== DISABLE 3D RENDERING FRAME (MÀN ĐEN 9999PX - ZINDEX 1) ====================
+-- ==================== DISABLE 3D RENDERING FRAME ====================
 local BlackScreenFrame = Instance.new("Frame")
 BlackScreenFrame.Name = "BlackScreenFrame"
 BlackScreenFrame.Size = UDim2.new(0, 9999, 0, 9999)
@@ -55,10 +55,10 @@ BlackScreenFrame.Position = UDim2.new(0.5, -5000, 0.5, -5000)
 BlackScreenFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 BlackScreenFrame.BorderSizePixel = 0
 BlackScreenFrame.Visible = false
-BlackScreenFrame.ZIndex = 1 -- Chìm dưới cùng
+BlackScreenFrame.ZIndex = 1
 BlackScreenFrame.Parent = ScreenGui
 
--- ==================== BẢNG HIỂN THỊ TIỀN REAL-TIME (ZINDEX 2) ====================
+-- ==================== BẢNG HIỂN THỊ TIỀN REAL-TIME ====================
 local MoneyDisplay = Instance.new("TextLabel")
 MoneyDisplay.Name = "MoneyDisplay"
 MoneyDisplay.Size = UDim2.new(0, 260, 0, 35)
@@ -70,7 +70,7 @@ MoneyDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
 MoneyDisplay.Font = Enum.Font.SourceSansBold
 MoneyDisplay.TextSize = 16
 MoneyDisplay.Visible = false
-MoneyDisplay.ZIndex = 2 -- Nổi trên màn đen, dưới UI menu
+MoneyDisplay.ZIndex = 2
 MoneyDisplay.Parent = ScreenGui
 
 local UICornerMoney = Instance.new("UICorner")
@@ -82,7 +82,6 @@ UIStrokeMoney.Color = Color3.fromRGB(255, 215, 0)
 UIStrokeMoney.Thickness = 1.5
 UIStrokeMoney.Parent = MoneyDisplay
 
--- Lấy dữ liệu tiền thật từ Game
 task.spawn(function()
     while true do
         local leaderstats = plr:FindFirstChild("leaderstats")
@@ -223,34 +222,30 @@ local function autoRefineLoop()
     end
 end
 
--- LOGIC SMART FARM
 local function smartFarmLoop()
     local lastLevel = 0
     while runningSmartFarm do
         task.wait(0.5)
-        -- Kiểm tra dữ liệu Level/Ragdoll thật từ Player
         local currentLevel = plr:GetAttribute("RagdollLevel") or plr:GetAttribute("Level") or 0
-        local refineStat = plr:GetAttribute("RefinePercent") or 100 -- Trích xuất tỷ lệ Refine
+        local refineStat = plr:GetAttribute("RefinePercent") or 100
 
-        -- Nếu Refine dưới 20% -> Tạm dừng Upgrade & Refine
         if refineStat < 20 then
             smartPauseUpgrade = true
-            if SetStatus then SetStatus("Smart: Refine <20%! Tạm dừng up để dành Ragdoll mới") end
+            if SetStatus then SetStatus("Smart: Refine <20%! Tạm dừng up") end
         else
             smartPauseUpgrade = false
         end
 
-        -- Giới hạn nâng đúng +10 Level cho mỗi Ragdoll mới (Mốc 10, 20, 30, 40...)
         if currentLevel > 0 and currentLevel % 10 == 0 and currentLevel ~= lastLevel then
             lastLevel = currentLevel
             smartPauseUpgrade = true
-            if SetStatus then SetStatus("Smart: Đã đạt mốc " .. currentLevel .. " Level! Đợi Ragdoll mới") end
+            if SetStatus then SetStatus("Smart: Đạt mốc " .. currentLevel .. " Level!") end
             task.wait(3)
         end
     end
 end
 
--- ==================== INTRO LOADING SCREEN (0 - 100%) ====================
+-- ==================== INTRO LOADING SCREEN (CÓ FIX LỖI TREO 0%) ====================
 local LoadingFrame = Instance.new("Frame")
 LoadingFrame.Name = "LoadingFrame"
 LoadingFrame.Size = UDim2.new(0, 320, 0, 180)
@@ -280,9 +275,14 @@ local UICornerAvatar = Instance.new("UICorner")
 UICornerAvatar.CornerRadius = UDim.new(1, 0)
 UICornerAvatar.Parent = AvatarImg
 
+-- Tải Avatar An Toàn (Có Bọc pcall Chống Treo)
 task.spawn(function()
-    local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-    if isReady then AvatarImg.Image = content end
+    pcall(function()
+        local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+        if isReady and AvatarImg then 
+            AvatarImg.Image = content 
+        end
+    end)
 end)
 
 local NameLabel = Instance.new("TextLabel")
@@ -328,7 +328,7 @@ PercentLabel.TextSize = 12
 PercentLabel.ZIndex = 21
 PercentLabel.Parent = LoadingFrame
 
--- ==================== DYNAMIC ISLAND & METRICS PANEL (ZINDEX 10) ====================
+-- ==================== DYNAMIC ISLAND & METRICS PANEL ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
 DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
@@ -378,22 +378,22 @@ SetStatus = function(txt)
     StatusText.Text = "⚡ " .. txt
 end
 
--- ==================== NÚT TOGGLE ECLIPSER VUÔNG TRÒN / SQUIRCLE (CÁCH 10PX) ====================
+-- ==================== NÚT TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 60, 0, 38)
-ToggleBtn.Position = UDim2.new(0.5, 135, 0, 12) -- Cách Dynamic Island 10px
+ToggleBtn.Position = UDim2.new(0.5, 135, 0, 12)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleBtn.Text = "eclipser"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.TextSize = 12
 ToggleBtn.Font = Enum.Font.SourceSansBold
 ToggleBtn.Visible = false
-ToggleBtn.ZIndex = 10 -- Luôn nổi trên màn đen
+ToggleBtn.ZIndex = 10
 ToggleBtn.Parent = ScreenGui
 
 local UICornerToggle = Instance.new("UICorner")
-UICornerToggle.CornerRadius = UDim.new(0, 10) -- Bo góc Squircle vuông tròn chuẩn
+UICornerToggle.CornerRadius = UDim.new(0, 10)
 UICornerToggle.Parent = ToggleBtn
 
 local UIStrokeToggle = Instance.new("UIStroke")
@@ -401,7 +401,7 @@ UIStrokeToggle.Color = Color3.fromRGB(255, 255, 255)
 UIStrokeToggle.Thickness = 2
 UIStrokeToggle.Parent = ToggleBtn
 
--- ==================== METRICS DISPLAY (CHỮ CẦU VỒNG HSV) ====================
+-- ==================== METRICS DISPLAY ====================
 local MetricsText = Instance.new("TextLabel")
 MetricsText.Name = "MetricsText"
 MetricsText.Size = UDim2.new(0, 320, 0, 20)
@@ -446,7 +446,7 @@ task.spawn(function()
     end
 end)
 
--- ==================== MAIN FRAME (RGB BORDER 360°) ====================
+-- ==================== MAIN FRAME ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 380, 0, 310)
@@ -454,7 +454,7 @@ MainFrame.Position = UDim2.new(0.5, -190, 0.5, -155)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
-MainFrame.ZIndex = 10 -- Nổi trên cùng
+MainFrame.ZIndex = 10
 MainFrame.Parent = ScreenGui
 
 local UICornerMain = Instance.new("UICorner")
@@ -508,7 +508,7 @@ MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
 MinimizeBtn.TextSize = 12
 MinimizeBtn.ZIndex = 11
-MinimizeBtn.Parent = MinimizeBtn
+MinimizeBtn.Parent = MainFrame
 
 local UICornerMin = Instance.new("UICorner")
 UICornerMin.CornerRadius = UDim.new(0, 4)
@@ -725,7 +725,7 @@ LangBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ==================== ANIMATION INTRO ====================
+-- ==================== CHẠY INTRO KHÔNG LO TREO ====================
 task.spawn(function()
     for i = 0, 100 do
         PercentLabel.Text = "Loading... " .. i .. "%"
