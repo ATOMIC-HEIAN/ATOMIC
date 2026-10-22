@@ -1,30 +1,28 @@
--- [[ ECLIPSER HUB - BREAK YOUR BONES (FIXED 0% LOADING BUG) ]]
+-- [[ ECLIPSER HUB - EVADE EDITION (FIXED VIETNAMESE ENCODING) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
 
 local plr = Players.LocalPlayer
-local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
-if CoreGui:FindFirstChild("EclipserHubUI") then
-    CoreGui.EclipserHubUI:Destroy()
+if CoreGui:FindFirstChild("EclipserEvadeUI") then
+    CoreGui.EclipserEvadeUI:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "EclipserHubUI"
+ScreenGui.Name = "EclipserEvadeUI"
 ScreenGui.Parent = CoreGui
 ScreenGui.DisplayOrder = 999999
 
 local CurrentLang = "VN"
 
 -- ==================== 0. ANTI-AFK SYSTEM ====================
-local runningAntiAFK = false
+local runningAntiAFK = true
 plr.Idled:Connect(function()
     if runningAntiAFK then
         VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
@@ -33,7 +31,7 @@ plr.Idled:Connect(function()
     end
 end)
 
--- ==================== AUTO FPS BOOSTER (ẨN) ====================
+-- ==================== AUTO FPS BOOSTER (AN) ====================
 task.spawn(function()
     pcall(function()
         Lighting.GlobalShadows = false
@@ -47,7 +45,7 @@ task.spawn(function()
     end)
 end)
 
--- ==================== DISABLE 3D RENDERING FRAME ====================
+-- ==================== DISABLE 3D RENDERING FRAME (MAN DEN 9999PX) ====================
 local BlackScreenFrame = Instance.new("Frame")
 BlackScreenFrame.Name = "BlackScreenFrame"
 BlackScreenFrame.Size = UDim2.new(0, 9999, 0, 9999)
@@ -58,283 +56,95 @@ BlackScreenFrame.Visible = false
 BlackScreenFrame.ZIndex = 1
 BlackScreenFrame.Parent = ScreenGui
 
--- ==================== BẢNG HIỂN THỊ TIỀN REAL-TIME ====================
-local MoneyDisplay = Instance.new("TextLabel")
-MoneyDisplay.Name = "MoneyDisplay"
-MoneyDisplay.Size = UDim2.new(0, 260, 0, 35)
-MoneyDisplay.Position = UDim2.new(0.5, -130, 0, 80)
-MoneyDisplay.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MoneyDisplay.BackgroundTransparency = 0.2
-MoneyDisplay.Text = "💰 Money: Loading..."
-MoneyDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
-MoneyDisplay.Font = Enum.Font.SourceSansBold
-MoneyDisplay.TextSize = 16
-MoneyDisplay.Visible = false
-MoneyDisplay.ZIndex = 2
-MoneyDisplay.Parent = ScreenGui
+-- ==================== BANG TIEN & LEVEL REAL-TIME EVADE ====================
+local StatsDisplay = Instance.new("TextLabel")
+StatsDisplay.Name = "StatsDisplay"
+StatsDisplay.Size = UDim2.new(0, 320, 0, 45)
+StatsDisplay.Position = UDim2.new(0.5, -160, 0, 80)
+StatsDisplay.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+StatsDisplay.BackgroundTransparency = 0.1
+StatsDisplay.BorderSizePixel = 0
+StatsDisplay.Text = "💵 Tokens: Dang tai... | ⭐ Level: Dang tai..."
+StatsDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
+StatsDisplay.Font = Enum.Font.SourceSansBold
+StatsDisplay.TextSize = 15
+StatsDisplay.Visible = false
+StatsDisplay.ZIndex = 2
+StatsDisplay.Parent = ScreenGui
 
-local UICornerMoney = Instance.new("UICorner")
-UICornerMoney.CornerRadius = UDim.new(0, 8)
-UICornerMoney.Parent = MoneyDisplay
+local UICornerStats = Instance.new("UICorner")
+UICornerStats.CornerRadius = UDim.new(0, 8)
+UICornerStats.Parent = StatsDisplay
 
-local UIStrokeMoney = Instance.new("UIStroke")
-UIStrokeMoney.Color = Color3.fromRGB(255, 215, 0)
-UIStrokeMoney.Thickness = 1.5
-UIStrokeMoney.Parent = MoneyDisplay
-
+-- Trich xuat Tokens & Level tat trong game Evade
 task.spawn(function()
     while true do
         local leaderstats = plr:FindFirstChild("leaderstats")
-        local moneyVal = leaderstats and (leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Coins"))
-        if moneyVal then
-            MoneyDisplay.Text = "💰 Money: " .. tostring(moneyVal.Value)
-        else
-            MoneyDisplay.Text = "💰 Money: " .. tostring(plr:GetAttribute("Money") or 0)
-        end
+        local tokens = leaderstats and (leaderstats:FindFirstChild("Tokens") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash"))
+        local level = leaderstats and (leaderstats:FindFirstChild("Level") or leaderstats:FindFirstChild("LVL"))
+        
+        local tokenVal = tokens and tokens.Value or (plr:GetAttribute("Tokens") or 0)
+        local levelVal = level and level.Value or (plr:GetAttribute("Level") or 1)
+
+        StatsDisplay.Text = string.format("💵 Tokens: %s  |  ⭐ Level: %s", tostring(tokenVal), tostring(levelVal))
         task.wait(0.5)
     end
 end)
 
--- ==================== LOGIC GAME THẬT & SMART FARM ====================
-local runningAutofarm = false
-local runningUpgrade = false
-local runningNextRagdoll = false
-local runningRefine = false
-local runningSmartFarm = false
+-- ==================== LOGIC AUTO WIN EVADE (PARTS TREN TROI) ====================
+local runningAutoWin = false
+local SafePlatform = nil
 
-local slamDuration = 20
-local slamVelocity = 100
-local smartPauseUpgrade = false
-
-local function setFrozen(char, state)
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.Anchored = state end
-end
-
-local function safeTeleport(char, cframeAbove)
-    local parts = {}
-    for _, part in pairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            parts[#parts+1] = part
-            part.Anchored = true
-            part.AssemblyLinearVelocity = Vector3.new()
-            part.AssemblyAngularVelocity = Vector3.new()
-        end
+local function EnableAutoWin()
+    if not SafePlatform or not SafePlatform.Parent then
+        SafePlatform = Instance.new("Part")
+        SafePlatform.Name = "EclipserEvadeSafeZone"
+        SafePlatform.Size = Vector3.new(30, 2, 30)
+        SafePlatform.Position = Vector3.new(0, 500, 0) -- Do cao an toan tren troi
+        SafePlatform.Anchored = true
+        SafePlatform.CanCollide = true
+        SafePlatform.Material = Enum.Material.SmoothPlastic
+        SafePlatform.Color = Color3.fromRGB(30, 30, 30)
+        SafePlatform.Parent = workspace
     end
 
-    for _, part in pairs(parts) do
-        part.CFrame = cframeAbove + Vector3.new(math.random(-1,1), 0, math.random(-1,1))
-    end
-
-    task.wait(0.3)
-
-    for _, part in pairs(parts) do
-        part.Anchored = false
-    end
-end
-
-local function fireRagdollTouch()
-    local char = plr.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local ragdollPart = workspace:FindFirstChild("RagdollParts") and workspace.RagdollParts:FindFirstChild("RagdollCollission")
-    if hrp and ragdollPart then
-        local touchInterest = ragdollPart:FindFirstChildOfClass("TouchTransmitter")
-        if touchInterest then
-            firetouchinterest(hrp, ragdollPart, 0)
-            task.wait()
-            firetouchinterest(hrp, ragdollPart, 1)
-        end
-    end
-end
-
-local SetStatus
-
-local function autofarmLoop()
-    while runningAutofarm do
-        local char = plr.Character
-        if not char then
-            task.wait(1)
-        else
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            local head = char:FindFirstChild("Head")
-            local spawnFolder = workspace:FindFirstChild("Spawn")
-            if hrp and head and spawnFolder then
-                local targetPart = workspace:GetChildren()[50]
-                local teleportTarget = spawnFolder:GetChildren()[84]
-                if targetPart and teleportTarget then
-                    if SetStatus then SetStatus("Autofarm: Va chạm Ragdoll...") end
-                    fireRagdollTouch()
-                    local startTime = tick()
-                    while tick()-startTime < slamDuration and runningAutofarm do
-                        if not (hrp and head and targetPart) then break end
-                        local direction = (targetPart.Position - hrp.Position).Unit
-                        local velocity = direction * slamVelocity
-                        for _, partName in pairs({"HumanoidRootPart","Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}) do
-                            local part = char:FindFirstChild(partName)
-                            if part then
-                                part.AssemblyLinearVelocity = velocity + Vector3.new(0,15,0)
-                            end
-                        end
-                        task.wait(0.15)
-                    end
-                    if SetStatus then SetStatus("Autofarm: Teleport hồi phục...") end
-                    setFrozen(char,true)
-                    safeTeleport(char, teleportTarget.CFrame + Vector3.new(0,10,0))
-                    setFrozen(char,false)
-
-                    local oldChar = char
-                    repeat task.wait(0.5) until not runningAutofarm or (plr.Character ~= oldChar and plr.Character:FindFirstChild("HumanoidRootPart"))
-                    if not runningAutofarm then return end
-                    task.wait(1)
-                    fireRagdollTouch()
-                else
-                    task.wait(1)
+    task.spawn(function()
+        while runningAutoWin do
+            local char = plr.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                -- Instant TP len giua Part an toan
+                if (hrp.Position - (SafePlatform.Position + Vector3.new(0, 3, 0))).Magnitude > 5 then
+                    hrp.CFrame = SafePlatform.CFrame + Vector3.new(0, 3, 0)
                 end
-            else
-                task.wait(1)
             end
-        end
-    end
-end
-
-local function autoUpgradeLoop()
-    while runningUpgrade or (runningSmartFarm and not smartPauseUpgrade) do
-        Remotes.PurchaseBoneUpgrade:FireServer("Head")
-        Remotes.PurchaseBoneUpgrade:FireServer("Torso")
-        Remotes.PurchaseBoneUpgrade:FireServer("Arm")
-        Remotes.PurchaseBoneUpgrade:FireServer("Leg")
-        task.wait(0.2)
-    end
-end
-
-local function autoNextRagdollLoop()
-    while runningNextRagdoll or runningSmartFarm do
-        Remotes.PurchaseNextRagdoll:FireServer()
-        task.wait(0.5)
-    end
-end
-
-local function autoRefineLoop()
-    while runningRefine or (runningSmartFarm and not smartPauseUpgrade) do
-        Remotes.RefineRagdoll:FireServer()
-        task.wait(0.5)
-    end
-end
-
-local function smartFarmLoop()
-    local lastLevel = 0
-    while runningSmartFarm do
-        task.wait(0.5)
-        local currentLevel = plr:GetAttribute("RagdollLevel") or plr:GetAttribute("Level") or 0
-        local refineStat = plr:GetAttribute("RefinePercent") or 100
-
-        if refineStat < 20 then
-            smartPauseUpgrade = true
-            if SetStatus then SetStatus("Smart: Refine <20%! Tạm dừng up") end
-        else
-            smartPauseUpgrade = false
-        end
-
-        if currentLevel > 0 and currentLevel % 10 == 0 and currentLevel ~= lastLevel then
-            lastLevel = currentLevel
-            smartPauseUpgrade = true
-            if SetStatus then SetStatus("Smart: Đạt mốc " .. currentLevel .. " Level!") end
-            task.wait(3)
-        end
-    end
-end
-
--- ==================== INTRO LOADING SCREEN (CÓ FIX LỖI TREO 0%) ====================
-local LoadingFrame = Instance.new("Frame")
-LoadingFrame.Name = "LoadingFrame"
-LoadingFrame.Size = UDim2.new(0, 320, 0, 180)
-LoadingFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
-LoadingFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-LoadingFrame.BorderSizePixel = 0
-LoadingFrame.ZIndex = 20
-LoadingFrame.Parent = ScreenGui
-
-local UICornerLoad = Instance.new("UICorner")
-UICornerLoad.CornerRadius = UDim.new(0, 14)
-UICornerLoad.Parent = LoadingFrame
-
-local UIStrokeLoad = Instance.new("UIStroke")
-UIStrokeLoad.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeLoad.Thickness = 2
-UIStrokeLoad.Parent = LoadingFrame
-
-local AvatarImg = Instance.new("ImageLabel")
-AvatarImg.Size = UDim2.new(0, 50, 0, 50)
-AvatarImg.Position = UDim2.new(0.5, -25, 0, 15)
-AvatarImg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-AvatarImg.ZIndex = 21
-AvatarImg.Parent = LoadingFrame
-
-local UICornerAvatar = Instance.new("UICorner")
-UICornerAvatar.CornerRadius = UDim.new(1, 0)
-UICornerAvatar.Parent = AvatarImg
-
--- Tải Avatar An Toàn (Có Bọc pcall Chống Treo)
-task.spawn(function()
-    pcall(function()
-        local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-        if isReady and AvatarImg then 
-            AvatarImg.Image = content 
+            task.wait(0.1)
         end
     end)
-end)
+end
 
-local NameLabel = Instance.new("TextLabel")
-NameLabel.Size = UDim2.new(1, -20, 0, 20)
-NameLabel.Position = UDim2.new(0, 10, 0, 70)
-NameLabel.BackgroundTransparency = 1
-NameLabel.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
-NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameLabel.Font = Enum.Font.SourceSansBold
-NameLabel.TextSize = 13
-NameLabel.ZIndex = 21
-NameLabel.Parent = LoadingFrame
+local function DisableAutoWin()
+    if SafePlatform then
+        SafePlatform:Destroy()
+        SafePlatform = nil
+    end
+    -- Teleport ve vi tri mat dat ngau nhien khi tat
+    local char = plr.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local randomX = math.random(-50, 50)
+        local randomZ = math.random(-50, 50)
+        char.HumanoidRootPart.CFrame = CFrame.new(randomX, 5, randomZ)
+    end
+end
 
-local ProgressBg = Instance.new("Frame")
-ProgressBg.Size = UDim2.new(1, -40, 0, 8)
-ProgressBg.Position = UDim2.new(0, 20, 0, 105)
-ProgressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ProgressBg.ZIndex = 21
-ProgressBg.Parent = LoadingFrame
-
-local UICornerPBg = Instance.new("UICorner")
-UICornerPBg.CornerRadius = UDim.new(1, 0)
-UICornerPBg.Parent = ProgressBg
-
-local ProgressBar = Instance.new("Frame")
-ProgressBar.Size = UDim2.new(0, 0, 1, 0)
-ProgressBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ProgressBar.ZIndex = 22
-ProgressBar.Parent = ProgressBg
-
-local UICornerPBar = Instance.new("UICorner")
-UICornerPBar.CornerRadius = UDim.new(1, 0)
-UICornerPBar.Parent = ProgressBar
-
-local PercentLabel = Instance.new("TextLabel")
-PercentLabel.Size = UDim2.new(1, 0, 0, 20)
-PercentLabel.Position = UDim2.new(0, 0, 0, 120)
-PercentLabel.BackgroundTransparency = 1
-PercentLabel.Text = "Loading... 0%"
-PercentLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-PercentLabel.Font = Enum.Font.SourceSansBold
-PercentLabel.TextSize = 12
-PercentLabel.ZIndex = 21
-PercentLabel.Parent = LoadingFrame
-
--- ==================== DYNAMIC ISLAND & METRICS PANEL ====================
+-- ==================== DYNAMIC ISLAND & METRICS ====================
 local DynamicIsland = Instance.new("Frame")
 DynamicIsland.Name = "DynamicIsland"
 DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
 DynamicIsland.Position = UDim2.new(0.5, -195, 0, 12)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-DynamicIsland.Visible = false
+DynamicIsland.BorderSizePixel = 0
+DynamicIsland.Visible = true
 DynamicIsland.ZIndex = 10
 DynamicIsland.Parent = ScreenGui
 
@@ -342,17 +152,12 @@ local UICornerIsland = Instance.new("UICorner")
 UICornerIsland.CornerRadius = UDim.new(1, 0)
 UICornerIsland.Parent = DynamicIsland
 
-local UIStrokeIsland = Instance.new("UIStroke")
-UIStrokeIsland.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeIsland.Thickness = 2
-UIStrokeIsland.Parent = DynamicIsland
-
 local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, -55, 1, 0)
 StatusText.Position = UDim2.new(0, 12, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "⚡ eclipser hub | Ready"
-StatusText.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusText.Text = "⚡ eclipser hub | San sang"
+StatusText.TextColor3 = Color3.fromRGB(220, 220, 220)
 StatusText.Font = Enum.Font.SourceSansBold
 StatusText.TextSize = 12
 StatusText.TextXAlignment = Enum.TextXAlignment.Left
@@ -363,6 +168,7 @@ local LangBtn = Instance.new("TextButton")
 LangBtn.Size = UDim2.new(0, 38, 0, 22)
 LangBtn.Position = UDim2.new(1, -44, 0.5, -11)
 LangBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+LangBtn.BorderSizePixel = 0
 LangBtn.Text = "VN"
 LangBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 LangBtn.Font = Enum.Font.SourceSansBold
@@ -374,21 +180,22 @@ local UICornerLang = Instance.new("UICorner")
 UICornerLang.CornerRadius = UDim.new(1, 0)
 UICornerLang.Parent = LangBtn
 
-SetStatus = function(txt)
+local function SetStatus(txt)
     StatusText.Text = "⚡ " .. txt
 end
 
--- ==================== NÚT TOGGLE ECLIPSER ====================
+-- ==================== NUT TOGGLE ECLIPSER (SQUIRCLE - CACH 10PX) ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 60, 0, 38)
 ToggleBtn.Position = UDim2.new(0.5, 135, 0, 12)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.BorderSizePixel = 0
 ToggleBtn.Text = "eclipser"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.TextSize = 12
 ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.Visible = false
+ToggleBtn.Visible = true
 ToggleBtn.ZIndex = 10
 ToggleBtn.Parent = ScreenGui
 
@@ -396,12 +203,7 @@ local UICornerToggle = Instance.new("UICorner")
 UICornerToggle.CornerRadius = UDim.new(0, 10)
 UICornerToggle.Parent = ToggleBtn
 
-local UIStrokeToggle = Instance.new("UIStroke")
-UIStrokeToggle.Color = Color3.fromRGB(255, 255, 255)
-UIStrokeToggle.Thickness = 2
-UIStrokeToggle.Parent = ToggleBtn
-
--- ==================== METRICS DISPLAY ====================
+-- ==================== METRICS DISPLAY (FPS / MS / PING REALTIME) ====================
 local MetricsText = Instance.new("TextLabel")
 MetricsText.Name = "MetricsText"
 MetricsText.Size = UDim2.new(0, 320, 0, 20)
@@ -410,18 +212,10 @@ MetricsText.BackgroundTransparency = 1
 MetricsText.Text = "Fps: -- | Ms: -- | Ping: --"
 MetricsText.Font = Enum.Font.SourceSansBold
 MetricsText.TextSize = 13
-MetricsText.Visible = false
+MetricsText.TextColor3 = Color3.fromRGB(0, 255, 150)
+MetricsText.Visible = true
 MetricsText.ZIndex = 10
 MetricsText.Parent = ScreenGui
-
-task.spawn(function()
-    local hue = 0
-    while true do
-        hue = (hue + 0.01) % 1
-        MetricsText.TextColor3 = Color3.fromHSV(hue, 1, 1)
-        task.wait(0.03)
-    end
-end)
 
 task.spawn(function()
     local lastTime = tick()
@@ -446,14 +240,14 @@ task.spawn(function()
     end
 end)
 
--- ==================== MAIN FRAME ====================
+-- ==================== MAIN FRAME (KHONG VIEN) ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 310)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -155)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainFrame.Size = UDim2.new(0, 360, 0, 260)
+MainFrame.Position = UDim2.new(0.5, -180, 0.5, -130)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = false
+MainFrame.Visible = true
 MainFrame.ZIndex = 10
 MainFrame.Parent = ScreenGui
 
@@ -461,37 +255,11 @@ local UICornerMain = Instance.new("UICorner")
 UICornerMain.CornerRadius = UDim.new(0, 12)
 UICornerMain.Parent = MainFrame
 
-local UIStrokeMain = Instance.new("UIStroke")
-UIStrokeMain.Thickness = 2.5
-UIStrokeMain.Parent = MainFrame
-
-local UIGradientMain = Instance.new("UIGradient")
-UIGradientMain.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
-    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
-    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
-})
-UIGradientMain.Parent = UIStrokeMain
-
-task.spawn(function()
-    local angle = 0
-    while true do
-        if UIStrokeMain and UIStrokeMain.Parent then
-            angle = (angle + 3) % 360
-            UIGradientMain.Rotation = angle
-        end
-        task.wait(0.02)
-    end
-end)
-
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 0, 35)
 Title.Position = UDim2.new(0, 12, 0, 2)
 Title.BackgroundTransparency = 1
-Title.Text = "Break Your Bones | eclipser hub"
+Title.Text = "Evade | eclipser hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
@@ -503,6 +271,7 @@ local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 26, 0, 22)
 MinimizeBtn.Position = UDim2.new(1, -32, 0, 6)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.BorderSizePixel = 0
 MinimizeBtn.Text = "━"
 MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
@@ -529,7 +298,7 @@ local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -45)
 Container.Position = UDim2.new(0, 10, 0, 40)
 Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 0, 420)
+Container.CanvasSize = UDim2.new(0, 0, 0, 220)
 Container.ScrollBarThickness = 2
 Container.ZIndex = 11
 Container.Parent = MainFrame
@@ -540,7 +309,7 @@ UIList.Parent = Container
 
 local function CreateToggle(parent, text, defaultState, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 30)
+    frame.Size = UDim2.new(1, 0, 0, 32)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 11
     frame.Parent = parent
@@ -559,7 +328,8 @@ local function CreateToggle(parent, text, defaultState, callback)
     local toggle = Instance.new("TextButton")
     toggle.Size = UDim2.new(0, 36, 0, 18)
     toggle.Position = UDim2.new(1, -40, 0.5, -9)
-    toggle.BackgroundColor3 = defaultState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(40, 40, 40)
+    toggle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(40, 40, 40)
+    toggle.BorderSizePixel = 0
     toggle.Text = ""
     toggle.ZIndex = 12
     toggle.Parent = frame
@@ -572,6 +342,7 @@ local function CreateToggle(parent, text, defaultState, callback)
     circle.Size = UDim2.new(0, 14, 0, 14)
     circle.Position = defaultState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
     circle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+    circle.BorderSizePixel = 0
     circle.ZIndex = 13
     circle.Parent = toggle
 
@@ -583,134 +354,38 @@ local function CreateToggle(parent, text, defaultState, callback)
     toggle.MouseButton1Click:Connect(function()
         state = not state
         if state then
-            toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
             circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
             circle.Position = UDim2.new(1, -16, 0.5, -7)
-            SetStatus("Bật: " .. text)
+            SetStatus("Bat: " .. text)
         else
             toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
             circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             circle.Position = UDim2.new(0, 2, 0.5, -7)
-            SetStatus("Tắt: " .. text)
+            SetStatus("Tat: " .. text)
         end
         if callback then callback(state) end
     end)
 end
 
-local function CreateSlider(parent, title, min, max, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 40)
-    frame.BackgroundTransparency = 1
-    frame.ZIndex = 11
-    frame.Parent = parent
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 18)
-    label.BackgroundTransparency = 1
-    label.Text = title .. ": " .. tostring(default)
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextSize = 12
-    label.Font = Enum.Font.SourceSansBold
-    label.ZIndex = 12
-    label.Parent = frame
-
-    local sliderBg = Instance.new("TextButton")
-    sliderBg.Size = UDim2.new(1, 0, 0, 10)
-    sliderBg.Position = UDim2.new(0, 0, 0, 22)
-    sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    sliderBg.Text = ""
-    sliderBg.ZIndex = 12
-    sliderBg.Parent = frame
-
-    local sc = Instance.new("UICorner")
-    sc.CornerRadius = UDim.new(1, 0)
-    sc.Parent = sliderBg
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    fill.ZIndex = 13
-    fill.Parent = sliderBg
-
-    local fc = Instance.new("UICorner")
-    fc.CornerRadius = UDim.new(1, 0)
-    fc.Parent = fill
-
-    local sliding = false
-    local function updateSlider(input)
-        local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
-        local val = math.floor(min + (max - min) * pos)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        label.Text = title .. ": " .. tostring(val)
-        if callback then callback(val) end
-    end
-
-    sliderBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            sliding = true
-            updateSlider(input)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            sliding = false
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            updateSlider(input)
-        end
-    end)
-end
-
--- ==================== CÁC NÚT TÍNH NĂNG ====================
-CreateToggle(Container, "Smart Farm (Smart Mode)", false, function(v)
-    runningSmartFarm = v
+-- ==================== CAC NUT TINH NANG EVADE ====================
+CreateToggle(Container, "Auto Win (TP Tren Troi)", false, function(v)
+    runningAutoWin = v
     if v then
-        task.spawn(smartFarmLoop)
-        task.spawn(autoUpgradeLoop)
-        task.spawn(autoNextRagdollLoop)
-        task.spawn(autoRefineLoop)
+        EnableAutoWin()
+    else
+        DisableAutoWin()
     end
 end)
 
-CreateToggle(Container, "Anti-AFK System", false, function(v)
-    runningAntiAFK = v
-end)
-
-CreateToggle(Container, "Disable 3D Rendering (Màn Đen Treo)", false, function(v)
+CreateToggle(Container, "Disable 3D Rendering (Man Den)", false, function(v)
     BlackScreenFrame.Visible = v
-    MoneyDisplay.Visible = v
+    StatsDisplay.Visible = v
     RunService:Set3dRenderingEnabled(not v)
 end)
 
-CreateToggle(Container, "Autofarm Ragdoll", false, function(v)
-    runningAutofarm = v
-    if v then task.spawn(autofarmLoop) end
-end)
-
-CreateSlider(Container, "Slam Duration", 5, 60, 20, function(val)
-    slamDuration = val
-end)
-
-CreateSlider(Container, "Slam Velocity", 50, 500, 100, function(val)
-    slamVelocity = val
-end)
-
-CreateToggle(Container, "Auto Upgrade Bones", false, function(v)
-    runningUpgrade = v
-    if v then task.spawn(autoUpgradeLoop) end
-end)
-
-CreateToggle(Container, "Auto Purchase Next Ragdoll", false, function(v)
-    runningNextRagdoll = v
-    if v then task.spawn(autoNextRagdollLoop) end
-end)
-
-CreateToggle(Container, "Auto Refine Ragdoll", false, function(v)
-    runningRefine = v
-    if v then task.spawn(autoRefineLoop) end
+CreateToggle(Container, "He Thong Anti-AFK", true, function(v)
+    runningAntiAFK = v
 end)
 
 LangBtn.MouseButton1Click:Connect(function()
@@ -721,29 +396,6 @@ LangBtn.MouseButton1Click:Connect(function()
     else
         CurrentLang = "VN"
         LangBtn.Text = "VN"
-        SetStatus("Đã đổi sang VN")
+        SetStatus("Doi sang VN")
     end
-end)
-
--- ==================== CHẠY INTRO KHÔNG LO TREO ====================
-task.spawn(function()
-    for i = 0, 100 do
-        PercentLabel.Text = "Loading... " .. i .. "%"
-        ProgressBar.Size = UDim2.new(i / 100, 0, 1, 0)
-        task.wait(0.015)
-    end
-
-    task.wait(0.2)
-    
-    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local fadeOut = TweenService:Create(LoadingFrame, tweenInfo, {BackgroundTransparency = 1})
-    fadeOut:Play()
-    
-    fadeOut.Completed:Connect(function()
-        LoadingFrame:Destroy()
-        DynamicIsland.Visible = true
-        MetricsText.Visible = true
-        ToggleBtn.Visible = true
-        MainFrame.Visible = true
-    end)
 end)
