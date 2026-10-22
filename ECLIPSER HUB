@@ -1,8 +1,9 @@
--- [[ ECLIPSER HUB - EVADE EDITION (FIXED VIETNAMESE ENCODING) ]]
+-- [[ ECLIPSER HUB - EVADE EDITION (WITH INTRO LOADING SCREEN) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 local Lighting = game:GetService("Lighting")
@@ -45,7 +46,84 @@ task.spawn(function()
     end)
 end)
 
--- ==================== DISABLE 3D RENDERING FRAME (MAN DEN 9999PX) ====================
+-- ==================== INTRO LOADING SCREEN (0 - 100%) ====================
+local LoadingFrame = Instance.new("Frame")
+LoadingFrame.Name = "LoadingFrame"
+LoadingFrame.Size = UDim2.new(0, 320, 0, 180)
+LoadingFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+LoadingFrame.BorderSizePixel = 0
+LoadingFrame.ZIndex = 20
+LoadingFrame.Parent = ScreenGui
+
+local UICornerLoad = Instance.new("UICorner")
+UICornerLoad.CornerRadius = UDim.new(0, 14)
+UICornerLoad.Parent = LoadingFrame
+
+local AvatarImg = Instance.new("ImageLabel")
+AvatarImg.Size = UDim2.new(0, 50, 0, 50)
+AvatarImg.Position = UDim2.new(0.5, -25, 0, 15)
+AvatarImg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AvatarImg.ZIndex = 21
+AvatarImg.Parent = LoadingFrame
+
+local UICornerAvatar = Instance.new("UICorner")
+UICornerAvatar.CornerRadius = UDim.new(1, 0)
+UICornerAvatar.Parent = AvatarImg
+
+task.spawn(function()
+    pcall(function()
+        local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+        if isReady and AvatarImg then 
+            AvatarImg.Image = content 
+        end
+    end)
+end)
+
+local NameLabel = Instance.new("TextLabel")
+NameLabel.Size = UDim2.new(1, -20, 0, 20)
+NameLabel.Position = UDim2.new(0, 10, 0, 70)
+NameLabel.BackgroundTransparency = 1
+NameLabel.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+NameLabel.Font = Enum.Font.SourceSansBold
+NameLabel.TextSize = 13
+NameLabel.ZIndex = 21
+NameLabel.Parent = LoadingFrame
+
+local ProgressBg = Instance.new("Frame")
+ProgressBg.Size = UDim2.new(1, -40, 0, 8)
+ProgressBg.Position = UDim2.new(0, 20, 0, 105)
+ProgressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ProgressBg.ZIndex = 21
+ProgressBg.Parent = LoadingFrame
+
+local UICornerPBg = Instance.new("UICorner")
+UICornerPBg.CornerRadius = UDim.new(1, 0)
+UICornerPBg.Parent = ProgressBg
+
+local ProgressBar = Instance.new("Frame")
+ProgressBar.Size = UDim2.new(0, 0, 1, 0)
+ProgressBar.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+ProgressBar.ZIndex = 22
+ProgressBar.Parent = ProgressBg
+
+local UICornerPBar = Instance.new("UICorner")
+UICornerPBar.CornerRadius = UDim.new(1, 0)
+UICornerPBar.Parent = ProgressBar
+
+local PercentLabel = Instance.new("TextLabel")
+PercentLabel.Size = UDim2.new(1, 0, 0, 20)
+PercentLabel.Position = UDim2.new(0, 0, 0, 120)
+PercentLabel.BackgroundTransparency = 1
+PercentLabel.Text = "Loading... 0%"
+PercentLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+PercentLabel.Font = Enum.Font.SourceSansBold
+PercentLabel.TextSize = 12
+PercentLabel.ZIndex = 21
+PercentLabel.Parent = LoadingFrame
+
+-- ==================== DISABLE 3D RENDERING FRAME ====================
 local BlackScreenFrame = Instance.new("Frame")
 BlackScreenFrame.Name = "BlackScreenFrame"
 BlackScreenFrame.Size = UDim2.new(0, 9999, 0, 9999)
@@ -56,7 +134,7 @@ BlackScreenFrame.Visible = false
 BlackScreenFrame.ZIndex = 1
 BlackScreenFrame.Parent = ScreenGui
 
--- ==================== BANG TIEN & LEVEL REAL-TIME EVADE ====================
+-- ==================== BANG TOKENS & LEVEL REAL-TIME EVADE ====================
 local StatsDisplay = Instance.new("TextLabel")
 StatsDisplay.Name = "StatsDisplay"
 StatsDisplay.Size = UDim2.new(0, 320, 0, 45)
@@ -64,7 +142,7 @@ StatsDisplay.Position = UDim2.new(0.5, -160, 0, 80)
 StatsDisplay.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 StatsDisplay.BackgroundTransparency = 0.1
 StatsDisplay.BorderSizePixel = 0
-StatsDisplay.Text = "💵 Tokens: Dang tai... | ⭐ Level: Dang tai..."
+StatsDisplay.Text = "💵 Tokens: Dang quet... | ⭐ Level: Dang quet..."
 StatsDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
 StatsDisplay.Font = Enum.Font.SourceSansBold
 StatsDisplay.TextSize = 15
@@ -76,22 +154,45 @@ local UICornerStats = Instance.new("UICorner")
 UICornerStats.CornerRadius = UDim.new(0, 8)
 UICornerStats.Parent = StatsDisplay
 
--- Trich xuat Tokens & Level tat trong game Evade
+local function GetEvadeRealData()
+    local realTokens = nil
+    local realLevel = nil
+
+    if plr:GetAttribute("Tokens") then realTokens = plr:GetAttribute("Tokens") end
+    if plr:GetAttribute("Token") then realTokens = plr:GetAttribute("Token") end
+    if plr:GetAttribute("Level") then realLevel = plr:GetAttribute("Level") end
+
+    local dataFolder = plr:FindFirstChild("PlayerData") or plr:FindFirstChild("Data") or plr:FindFirstChild("stats")
+    if dataFolder then
+        local tVal = dataFolder:FindFirstChild("Tokens") or dataFolder:FindFirstChild("Token") or dataFolder:FindFirstChild("Point")
+        local lVal = dataFolder:FindFirstChild("Level") or dataFolder:FindFirstChild("LVL")
+        if tVal then realTokens = tVal.Value end
+        if lVal then realLevel = lVal.Value end
+    end
+
+    local leaderstats = plr:FindFirstChild("leaderstats")
+    if leaderstats then
+        local tVal = leaderstats:FindFirstChild("Tokens") or leaderstats:FindFirstChild("Token") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash")
+        local lVal = leaderstats:FindFirstChild("Level") or leaderstats:FindFirstChild("LVL")
+        if tVal and not realTokens then realTokens = tVal.Value end
+        if lVal and not realLevel then realLevel = lVal.Value end
+    end
+
+    realTokens = realTokens or 0
+    realLevel = realLevel or 18
+
+    return realTokens, realLevel
+end
+
 task.spawn(function()
     while true do
-        local leaderstats = plr:FindFirstChild("leaderstats")
-        local tokens = leaderstats and (leaderstats:FindFirstChild("Tokens") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash"))
-        local level = leaderstats and (leaderstats:FindFirstChild("Level") or leaderstats:FindFirstChild("LVL"))
-        
-        local tokenVal = tokens and tokens.Value or (plr:GetAttribute("Tokens") or 0)
-        local levelVal = level and level.Value or (plr:GetAttribute("Level") or 1)
-
-        StatsDisplay.Text = string.format("💵 Tokens: %s  |  ⭐ Level: %s", tostring(tokenVal), tostring(levelVal))
+        local tokens, level = GetEvadeRealData()
+        StatsDisplay.Text = string.format("💵 Tokens: %s  |  ⭐ Level: %s", tostring(tokens), tostring(level))
         task.wait(0.5)
     end
 end)
 
--- ==================== LOGIC AUTO WIN EVADE (PARTS TREN TROI) ====================
+-- ==================== LOGIC AUTO WIN EVADE ====================
 local runningAutoWin = false
 local SafePlatform = nil
 
@@ -100,7 +201,7 @@ local function EnableAutoWin()
         SafePlatform = Instance.new("Part")
         SafePlatform.Name = "EclipserEvadeSafeZone"
         SafePlatform.Size = Vector3.new(30, 2, 30)
-        SafePlatform.Position = Vector3.new(0, 500, 0) -- Do cao an toan tren troi
+        SafePlatform.Position = Vector3.new(0, 500, 0)
         SafePlatform.Anchored = true
         SafePlatform.CanCollide = true
         SafePlatform.Material = Enum.Material.SmoothPlastic
@@ -113,7 +214,6 @@ local function EnableAutoWin()
             local char = plr.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 local hrp = char.HumanoidRootPart
-                -- Instant TP len giua Part an toan
                 if (hrp.Position - (SafePlatform.Position + Vector3.new(0, 3, 0))).Magnitude > 5 then
                     hrp.CFrame = SafePlatform.CFrame + Vector3.new(0, 3, 0)
                 end
@@ -128,7 +228,6 @@ local function DisableAutoWin()
         SafePlatform:Destroy()
         SafePlatform = nil
     end
-    -- Teleport ve vi tri mat dat ngau nhien khi tat
     local char = plr.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         local randomX = math.random(-50, 50)
@@ -144,7 +243,7 @@ DynamicIsland.Size = UDim2.new(0, 320, 0, 38)
 DynamicIsland.Position = UDim2.new(0.5, -195, 0, 12)
 DynamicIsland.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DynamicIsland.BorderSizePixel = 0
-DynamicIsland.Visible = true
+DynamicIsland.Visible = false
 DynamicIsland.ZIndex = 10
 DynamicIsland.Parent = ScreenGui
 
@@ -184,7 +283,7 @@ local function SetStatus(txt)
     StatusText.Text = "⚡ " .. txt
 end
 
--- ==================== NUT TOGGLE ECLIPSER (SQUIRCLE - CACH 10PX) ====================
+-- ==================== NUT TOGGLE ECLIPSER ====================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "EclipserToggle"
 ToggleBtn.Size = UDim2.new(0, 60, 0, 38)
@@ -195,7 +294,7 @@ ToggleBtn.Text = "eclipser"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.TextSize = 12
 ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.Visible = true
+ToggleBtn.Visible = false
 ToggleBtn.ZIndex = 10
 ToggleBtn.Parent = ScreenGui
 
@@ -203,7 +302,7 @@ local UICornerToggle = Instance.new("UICorner")
 UICornerToggle.CornerRadius = UDim.new(0, 10)
 UICornerToggle.Parent = ToggleBtn
 
--- ==================== METRICS DISPLAY (FPS / MS / PING REALTIME) ====================
+-- ==================== METRICS DISPLAY ====================
 local MetricsText = Instance.new("TextLabel")
 MetricsText.Name = "MetricsText"
 MetricsText.Size = UDim2.new(0, 320, 0, 20)
@@ -213,7 +312,7 @@ MetricsText.Text = "Fps: -- | Ms: -- | Ping: --"
 MetricsText.Font = Enum.Font.SourceSansBold
 MetricsText.TextSize = 13
 MetricsText.TextColor3 = Color3.fromRGB(0, 255, 150)
-MetricsText.Visible = true
+MetricsText.Visible = false
 MetricsText.ZIndex = 10
 MetricsText.Parent = ScreenGui
 
@@ -240,14 +339,14 @@ task.spawn(function()
     end
 end)
 
--- ==================== MAIN FRAME (KHONG VIEN) ====================
+-- ==================== MAIN FRAME ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 360, 0, 260)
 MainFrame.Position = UDim2.new(0.5, -180, 0.5, -130)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = true
+MainFrame.Visible = false
 MainFrame.ZIndex = 10
 MainFrame.Parent = ScreenGui
 
@@ -368,7 +467,7 @@ local function CreateToggle(parent, text, defaultState, callback)
     end)
 end
 
--- ==================== CAC NUT TINH NANG EVADE ====================
+-- ==================== CAC NUT TINH NANG ====================
 CreateToggle(Container, "Auto Win (TP Tren Troi)", false, function(v)
     runningAutoWin = v
     if v then
@@ -398,4 +497,28 @@ LangBtn.MouseButton1Click:Connect(function()
         LangBtn.Text = "VN"
         SetStatus("Doi sang VN")
     end
+end)
+
+-- ==================== CHAY ANIMATION INTRO LOAD 0-100% ====================
+task.spawn(function()
+    for i = 0, 100 do
+        PercentLabel.Text = "Loading... " .. i .. "%"
+        ProgressBar.Size = UDim2.new(i / 100, 0, 1, 0)
+        task.wait(0.015)
+    end
+
+    task.wait(0.2)
+    
+    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local fadeOut = TweenService:Create(LoadingFrame, tweenInfo, {BackgroundTransparency = 1})
+    fadeOut:Play()
+    
+    fadeOut.Completed:Connect(function()
+        LoadingFrame:Destroy()
+        
+        DynamicIsland.Visible = true
+        MetricsText.Visible = true
+        ToggleBtn.Visible = true
+        MainFrame.Visible = true
+    end)
 end)
