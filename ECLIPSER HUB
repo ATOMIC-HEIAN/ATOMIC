@@ -1,4 +1,4 @@
--- [[ ECLIPSER HUB - UNIVERSAL MASTER ULTIMATE EDITION ]]
+-- [[ ECLIPSER HUB - UNIVERSAL MASTER ULTIMATE EDITION (FULL VIP & SERVER) ]]
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -10,22 +10,23 @@ local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
 local TeleportService = game:GetService("TeleportService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local HttpService = game:GetService("HttpService")
 
 local plr = Players.LocalPlayer
 
-if CoreGui:FindFirstChild("EclipserUniversalUI") then
-    CoreGui.EclipserUniversalUI:Destroy()
+if CoreGui:FindFirstChild("EclipserMasterUI") then
+    CoreGui.EclipserMasterUI:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "EclipserUniversalUI"
+ScreenGui.Name = "EclipserMasterUI"
 ScreenGui.Parent = CoreGui
 ScreenGui.DisplayOrder = 999999
 
 local CurrentLang = "VN"
 local scriptStartTime = tick()
 
--- ==================== CÁC BIẾN TRẠNG THÁI (GLOBAL STATES) ====================
+-- ==================== BIẾN TRẠNG THÁI ====================
 local runningAntiAFK = true
 local runningAntiRagdoll = false
 local runningAntiBlock = false
@@ -50,8 +51,17 @@ local flySpeed = 50
 local hitboxSize = 10
 local reachSize = 5
 local flyConnection = nil
+local originalMaterials = {}
+local vipLinkInput = ""
 
--- ==================== 0. ANTI-AFK & ANTI-KICK & AUTO REJOIN ====================
+-- ==================== ANIMATION HELPER ====================
+local function TweenObj(obj, info, properties)
+    local tween = TweenService:Create(obj, TweenInfo.new(unpack(info)), properties)
+    tween:Play()
+    return tween
+end
+
+-- ==================== ANTI AFK & KICK ====================
 plr.Idled:Connect(function()
     if runningAntiAFK then
         VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
@@ -66,9 +76,7 @@ pcall(function()
     setreadonly(mt, false)
     mt.__namecall = newcclosure(function(self, ...)
         local method = getnamecallmethod()
-        if runningAntiKick and (method == "Kick" or method == "kick") then
-            return
-        end
+        if runningAntiKick and (method == "Kick" or method == "kick") then return end
         return old(self, ...)
     end)
     setreadonly(mt, true)
@@ -90,10 +98,19 @@ local function applySuperFPS(state)
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("PostEffect") then
                 v.Enabled = not state
+            elseif v:IsA("BasePart") and not v:IsA("MeshPart") then
+                if state then
+                    if not originalMaterials[v] then originalMaterials[v] = v.Material end
+                    v.Material = Enum.Material.SmoothPlastic
+                elseif originalMaterials[v] then
+                    v.Material = originalMaterials[v]
+                end
             end
         end
         if state then
             settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+            workspace.Terrain.WaterWaveSize = 0
+            workspace.Terrain.WaterWaveSpeed = 0
         end
     end)
 end
@@ -169,14 +186,14 @@ local PercentLabel = Instance.new("TextLabel")
 PercentLabel.Size = UDim2.new(1, 0, 0, 20)
 PercentLabel.Position = UDim2.new(0, 0, 0, 120)
 PercentLabel.BackgroundTransparency = 1
-PercentLabel.Text = "Universal Hub Loading... 0%"
+PercentLabel.Text = "Master Edition Loading... 0%"
 PercentLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 PercentLabel.Font = Enum.Font.SourceSansBold
 PercentLabel.TextSize = 12
 PercentLabel.ZIndex = 21
 PercentLabel.Parent = LoadingFrame
 
--- ==================== DISABLE 3D RENDERING FRAME (MÀN ĐEN 9999PX) ====================
+-- ==================== DISABLE 3D RENDERING FRAME ====================
 local BlackScreenFrame = Instance.new("Frame")
 BlackScreenFrame.Name = "BlackScreenFrame"
 BlackScreenFrame.Size = UDim2.new(0, 9999, 0, 9999)
@@ -187,7 +204,7 @@ BlackScreenFrame.Visible = false
 BlackScreenFrame.ZIndex = 1
 BlackScreenFrame.Parent = ScreenGui
 
--- ==================== BẢNG STATS REAL-TIME TRÍCH XUẤT DATA ====================
+-- ==================== BẢNG STATS REAL-TIME ====================
 local StatsDisplay = Instance.new("TextLabel")
 StatsDisplay.Name = "StatsDisplay"
 StatsDisplay.Size = UDim2.new(0, 340, 0, 45)
@@ -215,7 +232,7 @@ local function GetUniversalRealData()
 
     local dataFolder = plr:FindFirstChild("PlayerData") or plr:FindFirstChild("Data") or plr:FindFirstChild("stats")
     if dataFolder then
-        local mVal = dataFolder:FindFirstChild("Tokens") or dataFolder:FindFirstChild("Money") or dataFolder:FindFirstChild("Cash") or dataFolder:FindFirstChild("Coins")
+        local mVal = dataFolder:FindFirstChild("Tokens") or dataFolder:FindFirstChild("Money") or dataFolder:FindFirstChild("Cash")
         local lVal = dataFolder:FindFirstChild("Level") or dataFolder:FindFirstChild("LVL")
         if mVal then realMoney = mVal.Value end
         if lVal then realLevel = lVal.Value end
@@ -223,7 +240,7 @@ local function GetUniversalRealData()
 
     local leaderstats = plr:FindFirstChild("leaderstats")
     if leaderstats then
-        local mVal = leaderstats:FindFirstChild("Tokens") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Coins")
+        local mVal = leaderstats:FindFirstChild("Tokens") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash")
         local lVal = leaderstats:FindFirstChild("Level") or leaderstats:FindFirstChild("LVL")
         if mVal and not realMoney then realMoney = mVal.Value end
         if lVal and not realLevel then realLevel = lVal.Value end
@@ -258,7 +275,7 @@ local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, -55, 1, 0)
 StatusText.Position = UDim2.new(0, 12, 0, 0)
 StatusText.BackgroundTransparency = 1
-StatusText.Text = "⚡ eclipser hub | Universal Edition"
+StatusText.Text = "⚡ eclipser hub | Master Edition"
 StatusText.TextColor3 = Color3.fromRGB(220, 220, 220)
 StatusText.Font = Enum.Font.SourceSansBold
 StatusText.TextSize = 12
@@ -305,6 +322,13 @@ local UICornerToggle = Instance.new("UICorner")
 UICornerToggle.CornerRadius = UDim.new(0, 10)
 UICornerToggle.Parent = ToggleBtn
 
+ToggleBtn.MouseEnter:Connect(function()
+    TweenObj(ToggleBtn, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {Size = UDim2.new(0, 66, 0, 42)})
+end)
+ToggleBtn.MouseLeave:Connect(function()
+    TweenObj(ToggleBtn, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {Size = UDim2.new(0, 60, 0, 38)})
+end)
+
 -- ==================== METRICS DISPLAY ====================
 local MetricsText = Instance.new("TextLabel")
 MetricsText.Name = "MetricsText"
@@ -343,8 +367,8 @@ end)
 -- ==================== MAIN FRAME ====================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 450, 0, 330)
-MainFrame.Position = UDim2.new(0.5, -225, 0.5, -165)
+MainFrame.Size = UDim2.new(0, 460, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -230, 0.5, -170)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
@@ -359,7 +383,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 0, 35)
 Title.Position = UDim2.new(0, 12, 0, 2)
 Title.BackgroundTransparency = 1
-Title.Text = "eclipser hub | Universal Edition"
+Title.Text = "eclipser hub | Master Edition"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
@@ -384,14 +408,21 @@ UICornerMin.CornerRadius = UDim.new(0, 4)
 UICornerMin.Parent = MinimizeBtn
 
 local menuVisible = true
-ToggleBtn.MouseButton1Click:Connect(function()
+local function ToggleMenu()
     menuVisible = not menuVisible
-    MainFrame.Visible = menuVisible
-end)
-MinimizeBtn.MouseButton1Click:Connect(function()
-    menuVisible = not menuVisible
-    MainFrame.Visible = menuVisible
-end)
+    if menuVisible then
+        MainFrame.Visible = true
+        TweenObj(MainFrame, {0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out}, {Size = UDim2.new(0, 460, 0, 340)})
+    else
+        local t = TweenObj(MainFrame, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In}, {Size = UDim2.new(0, 0, 0, 0)})
+        t.Completed:Connect(function()
+            if not menuVisible then MainFrame.Visible = false end
+        end)
+    end
+end
+
+ToggleBtn.MouseButton1Click:Connect(ToggleMenu)
+MinimizeBtn.MouseButton1Click:Connect(ToggleMenu)
 
 -- ==================== TAB HOLDER & CONTAINERS ====================
 local TabHolder = Instance.new("ScrollingFrame")
@@ -406,7 +437,7 @@ local UIListTab = Instance.new("UIListLayout")
 UIListTab.Padding = UDim.new(0, 4)
 UIListTab.Parent = TabHolder
 
-local tabs = {"Game", "General", "Combat", "Visuals", "Settings"}
+local tabs = {"Game", "General", "Combat", "Visuals", "Settings", "Server"}
 local containers = {}
 
 for i, tabName in ipairs(tabs) do
@@ -430,7 +461,7 @@ for i, tabName in ipairs(tabs) do
     Container.Position = UDim2.new(0, 124, 0, 38)
     Container.BackgroundTransparency = 1
     Container.Visible = (i == 1)
-    Container.CanvasSize = UDim2.new(0, 0, 0, 480)
+    Container.CanvasSize = UDim2.new(0, 0, 0, 620)
     Container.ScrollBarThickness = 2
     Container.ZIndex = 11
     Container.Parent = MainFrame
@@ -445,13 +476,11 @@ for i, tabName in ipairs(tabs) do
         for _, c in pairs(containers) do c.Visible = false end
         for _, b in pairs(TabHolder:GetChildren()) do
             if b:IsA("TextButton") then
-                b.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-                b.TextColor3 = Color3.fromRGB(255, 255, 255)
+                TweenObj(b, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundColor3 = Color3.fromRGB(22, 22, 22), TextColor3 = Color3.fromRGB(255, 255, 255)})
             end
         end
         Container.Visible = true
-        TabBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
-        TabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+        TweenObj(TabBtn, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundColor3 = Color3.fromRGB(0, 255, 150), TextColor3 = Color3.fromRGB(0, 0, 0)})
     end)
 end
 
@@ -503,14 +532,12 @@ local function CreateToggle(parent, text, defaultState, callback)
     toggle.MouseButton1Click:Connect(function()
         state = not state
         if state then
-            toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
-            circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            circle.Position = UDim2.new(1, -16, 0.5, -7)
+            TweenObj(toggle, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundColor3 = Color3.fromRGB(0, 255, 150)})
+            TweenObj(circle, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {Position = UDim2.new(1, -16, 0.5, -7), BackgroundColor3 = Color3.fromRGB(0, 0, 0)})
             SetStatus("Bat: " .. text)
         else
-            toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            circle.Position = UDim2.new(0, 2, 0.5, -7)
+            TweenObj(toggle, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)})
+            TweenObj(circle, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {Position = UDim2.new(0, 2, 0.5, -7), BackgroundColor3 = Color3.fromRGB(255, 255, 255)})
             SetStatus("Tat: " .. text)
         end
         if callback then callback(state) end
@@ -563,7 +590,7 @@ local function CreateSlider(parent, title, min, max, default, callback)
     local function updateSlider(input)
         local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
         local val = math.floor(min + (max - min) * pos)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
+        TweenObj(fill, {0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {Size = UDim2.new(pos, 0, 1, 0)})
         label.Text = title .. ": " .. tostring(val)
         if callback then callback(val) end
     end
@@ -602,12 +629,43 @@ local function CreateButton(parent, text, callback)
     bc.CornerRadius = UDim.new(0, 6)
     bc.Parent = btn
 
+    btn.MouseEnter:Connect(function()
+        TweenObj(btn, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)})
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenObj(btn, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundColor3 = Color3.fromRGB(25, 25, 25)})
+    end)
+
     btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
 end
 
--- ==================== 1. TAB GAME (DASHBOARD REAL-TIME) ====================
+local function CreateTextBox(parent, placeholder, callback)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, 0, 0, 28)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    box.BorderSizePixel = 0
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
+    box.Font = Enum.Font.SourceSansBold
+    box.TextSize = 12
+    box.ZIndex = 12
+    box.Parent = parent
+
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(0, 6)
+    bc.Parent = box
+
+    box.FocusLost:Connect(function(enterPressed)
+        if enterPressed and callback then callback(box.Text) end
+    end)
+    return box
+end
+
+-- ==================== 1. TAB GAME ====================
 local function CreateInfoLabel(parent, text)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, 0, 0, 24)
@@ -635,23 +693,6 @@ task.spawn(function()
     end)
 end)
 
-task.spawn(function()
-    local placeId = game.PlaceId
-    pcall(function()
-        local info = MarketplaceService:GetProductInfo(placeId)
-        local lowerName = string.lower(info.Name or "")
-        if string.find(lowerName, "evade") or string.find(lowerName, "doors") or string.find(lowerName, "horror") then
-            genreLabel.Text = "🏷️ The loai game: Kinh di / Sinh ton (Horror/Survival)"
-        elseif string.find(lowerName, "break") or string.find(lowerName, "ragdoll") or string.find(lowerName, "bone") then
-            genreLabel.Text = "🏷️ The loai game: Vat ly / Simulation (Physics)"
-        elseif string.find(lowerName, "blox fruit") or string.find(lowerName, "anime") or string.find(lowerName, "rpg") then
-            genreLabel.Text = "🏷️ The loai game: Nhap vai / Anime (Action RPG)"
-        else
-            genreLabel.Text = "🏷️ The loai game: Universal / Adventure"
-        end
-    end)
-end)
-
 local function formatTime(seconds)
     local hrs = math.floor(seconds / 3600)
     local mins = math.floor((seconds % 3600) / 60)
@@ -667,27 +708,19 @@ task.spawn(function()
     end
 end)
 
--- ==================== 2. TAB GENERAL (CHUYỂN ĐỘNG & BẢO VỆ) ====================
+-- ==================== 2. TAB GENERAL ====================
 CreateSlider(containers["General"], "WalkSpeed", 16, 300, 16, function(val)
-    walkSpeedVal = val
-    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-        plr.Character.Humanoid.WalkSpeed = val
-    end
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then plr.Character.Humanoid.WalkSpeed = val end
 end)
 
 CreateSlider(containers["General"], "JumpPower", 50, 500, 50, function(val)
-    jumpPowerVal = val
-    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-        plr.Character.Humanoid.JumpPower = val
-    end
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then plr.Character.Humanoid.JumpPower = val end
 end)
 
--- FLY HACK PHÍM E
 local function startFlying()
     local char = plr.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
 
     local bodyVel = Instance.new("BodyVelocity")
     bodyVel.Name = "EclipserFlyVelocity"
@@ -711,7 +744,6 @@ local function startFlying()
 
         local cam = workspace.CurrentCamera
         local moveDir = Vector3.new()
-
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
@@ -724,11 +756,7 @@ local function startFlying()
     end)
 end
 
-CreateToggle(containers["General"], "Fly Hack (Phim E de Bat/Tat)", false, function(v)
-    runningFly = v
-    if v then startFlying() end
-end)
-
+CreateToggle(containers["General"], "Fly Hack (Phim E)", false, function(v) runningFly = v if v then startFlying() end end)
 CreateSlider(containers["General"], "Fly Speed", 10, 200, 50, function(val) flySpeed = val end)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
@@ -738,7 +766,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
-CreateToggle(containers["General"], "Godmode (Chong Chet / Void Fall)", false, function(v)
+CreateToggle(containers["General"], "Godmode (Chong Chet)", false, function(v)
     runningGodmode = v
     if v then
         task.spawn(function()
@@ -801,7 +829,7 @@ CreateToggle(containers["General"], "Anti Kick", true, function(v) runningAntiKi
 CreateToggle(containers["General"], "Anti AFK", true, function(v) runningAntiAFK = v end)
 CreateToggle(containers["General"], "Auto Rejoin", false, function(v) runningAutoRejoin = v end)
 
--- ==================== 3. TAB COMBAT (HITBOX & REACH) ====================
+-- ==================== 3. TAB COMBAT ====================
 CreateToggle(containers["Combat"], "Hitbox Ke Thu", false, function(v)
     runningHitbox = v
     task.spawn(function()
@@ -848,7 +876,7 @@ end)
 
 CreateSlider(containers["Combat"], "Tam Reach Weapon", 2, 30, 5, function(val) reachSize = val end)
 
--- ==================== 4. TAB VISUALS (ESP & FPS BOOSTER) ====================
+-- ==================== 4. TAB VISUALS ====================
 CreateToggle(containers["Visuals"], "ESP Box (Khung Xuyen Tuong)", false, function(v)
     runningESPBox = v
     task.spawn(function()
@@ -918,12 +946,18 @@ CreateToggle(containers["Visuals"], "ESP Glass (Xuyen Kinh / Vat Can)", false, f
     runningESPGlass = v
     task.spawn(function()
         while runningESPGlass do
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") and (v.Material == Enum.Material.Glass or v.Transparency > 0) then
-                    v.LocalTransparencyModifier = 0.5
+            for _, part in pairs(workspace:GetDescendants()) do
+                if part:IsA("BasePart") and not part:IsDescendantOf(plr.Character) then
+                    if part.Material == Enum.Material.Glass or part.Transparency > 0 or string.find(string.lower(part.Name), "glass") or string.find(string.lower(part.Name), "window") then
+                        part.LocalTransparencyModifier = 0.6
+                        part.CanCollide = false
+                    end
                 end
             end
-            task.wait(2)
+            task.wait(1)
+        end
+        for _, part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then part.LocalTransparencyModifier = 0 end
         end
     end)
 end)
@@ -932,13 +966,8 @@ CreateToggle(containers["Visuals"], "Super FPS Booster", false, function(v) appl
 
 CreateToggle(containers["Visuals"], "Fullbright (Sang Ban Dem)", false, function(v)
     runningFullbright = v
-    if v then
-        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-        Lighting.Brightness = 2
-    else
-        Lighting.Ambient = Color3.fromRGB(128, 128, 128)
-        Lighting.Brightness = 1
-    end
+    if v then Lighting.Ambient = Color3.fromRGB(255, 255, 255) Lighting.Brightness = 2
+    else Lighting.Ambient = Color3.fromRGB(128, 128, 128) Lighting.Brightness = 1 end
 end)
 
 CreateSlider(containers["Visuals"], "Field Of View (FOV)", 70, 120, 70, function(val)
@@ -952,12 +981,111 @@ CreateToggle(containers["Settings"], "Disable 3D Rendering (Man Den)", false, fu
     RunService:Set3dRenderingEnabled(not v)
 end)
 
-CreateButton(containers["Settings"], "Rejoin Server (Vao Lai Game)", function()
-    TeleportService:Teleport(game.PlaceId, plr)
+CreateButton(containers["Settings"], "Rejoin Server (Vao Lai Game)", function() TeleportService:Teleport(game.PlaceId, plr) end)
+CreateButton(containers["Settings"], "Server Hop (Doi Server Khac)", function() TeleportService:Teleport(game.PlaceId) end)
+
+-- ==================== 6. TAB SERVER & VIP SERVER (CẬP NHẬT MỚI NHẤT) ====================
+local function FetchServers()
+    local servers = {}
+    pcall(function()
+        local raw = game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/0?sortOrder=Asc&limit=100")
+        local data = HttpService:JSONDecode(raw)
+        if data and data.data then servers = data.data end
+    end)
+    return servers
+end
+
+CreateInfoLabel(containers["Server"], "--- SERVER HOP (CHUNG) ---")
+
+CreateButton(containers["Server"], "Vao Server Co Nhieu Nguoi Nhat", function()
+    SetStatus("Dang tim Server dong nhat...")
+    local servers = FetchServers()
+    table.sort(servers, function(a, b) return a.playing > b.playing end)
+    for _, s in ipairs(servers) do
+        if s.id ~= game.JobId and s.playing < s.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, plr)
+            return
+        end
+    end
 end)
 
-CreateButton(containers["Settings"], "Server Hop (Doi Server Khac)", function()
-    TeleportService:Teleport(game.PlaceId)
+CreateButton(containers["Server"], "Vao Server Co It Nguoi Nhat", function()
+    SetStatus("Dang tim Server it nguoi nhat...")
+    local servers = FetchServers()
+    table.sort(servers, function(a, b) return a.playing < b.playing end)
+    for _, s in ipairs(servers) do
+        if s.id ~= game.JobId and s.playing > 0 then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, plr)
+            return
+        end
+    end
+end)
+
+CreateButton(containers["Server"], "Tim Server Co Nguoi Dang Treo (AFK)", function()
+    SetStatus("Dang tim Server AFK...")
+    local servers = FetchServers()
+    for _, s in ipairs(servers) do
+        if s.id ~= game.JobId and s.ping and s.ping > 180 then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, plr)
+            return
+        end
+    end
+end)
+
+CreateInfoLabel(containers["Server"], "--- VIP SERVER (QUẢN LÝ RIÊNG TƯ) ---")
+
+CreateTextBox(containers["Server"], "Dan Link Server VIP hoac Access Code...", function(txt)
+    vipLinkInput = txt
+    SetStatus("Da luu Link/Code VIP!")
+end)
+
+CreateButton(containers["Server"], "Sao Chep Link Server VIP", function()
+    if vipLinkInput ~= "" then
+        if setclipboard then
+            setclipboard(vipLinkInput)
+            SetStatus("Da sao chep Link VIP vao clipboard!")
+        else
+            SetStatus("Executor khong ho tro setclipboard!")
+        end
+    else
+        SetStatus("Chua co Link VIP nao de sao chep!")
+    end
+end)
+
+CreateButton(containers["Server"], "Join Server VIP Nhanh", function()
+    if vipLinkInput ~= "" then
+        SetStatus("Dang giai ma va ket noi Server VIP...")
+        pcall(function()
+            local code = string.match(vipLinkInput, "privateServerLinkCode=(%d+)") or string.match(vipLinkInput, "code=(%w+)")
+            if code and #code > 5 then
+                TeleportService:TeleportToPrivateServer(game.PlaceId, code, {plr})
+            else
+                TeleportService:Teleport(game.PlaceId, plr)
+            end
+        end)
+    else
+        SetStatus("Vui long nhap Link/Code VIP truoc!")
+    end
+end)
+
+CreateButton(containers["Server"], "Tao Server VIP Free (Solo 1 Nguoi)", function()
+    SetStatus("Dang quet tim phong trong 1 nguoi...")
+    pcall(function()
+        local servers = FetchServers()
+        for _, s in ipairs(servers) do
+            if s.id ~= game.JobId and s.playing == 1 then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, plr)
+                return
+            end
+        end
+        for _, s in ipairs(servers) do
+            if s.id ~= game.JobId and s.playing <= 3 then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, plr)
+                return
+            end
+        end
+        SetStatus("Khong tim thay phong trong, hay thu lai sau!")
+    end)
 end)
 
 LangBtn.MouseButton1Click:Connect(function()
@@ -977,13 +1105,11 @@ task.spawn(function()
     for i = 0, 100 do
         PercentLabel.Text = "Universal Hub Loading... " .. i .. "%"
         ProgressBar.Size = UDim2.new(i / 100, 0, 1, 0)
-        task.wait(0.015)
+        task.wait(0.012)
     end
 
     task.wait(0.2)
-    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local fadeOut = TweenService:Create(LoadingFrame, tweenInfo, {BackgroundTransparency = 1})
-    fadeOut:Play()
+    local fadeOut = TweenObj(LoadingFrame, {0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundTransparency = 1})
     
     fadeOut.Completed:Connect(function()
         LoadingFrame:Destroy()
@@ -991,5 +1117,6 @@ task.spawn(function()
         MetricsText.Visible = true
         ToggleBtn.Visible = true
         MainFrame.Visible = true
+        TweenObj(MainFrame, {0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out}, {Size = UDim2.new(0, 460, 0, 340)})
     end)
 end)
